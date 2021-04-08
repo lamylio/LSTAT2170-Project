@@ -1,0 +1,6 @@
+U.S. Natural Gas State Data 
+Deliveries to Residential Consumers
+Natural Gas Deliveries to Commercial Consumers (Excluding Vehicle Fuel) in Florida (MMcf)
+Monthly - from jan. 1991 to aug. 1998
+
+Remark:"Mcf" means 1,000 cubic feet of natural gas; "Mmcf" means 1,000 Mcf

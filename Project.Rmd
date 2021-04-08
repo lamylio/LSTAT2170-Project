@@ -1,0 +1,100 @@
+---
+# Document information
+
+title: "LSTAT2170 - Time series"
+subtitle: "Final Project"
+
+authors:
+  - "Lionel Lamy"
+  
+noma: 
+  - "1294-1700"
+
+# ---
+# You can remove settings below
+# Defaults values are defined
+
+institute: "Université catholique de Louvain"
+faculty: "Louvain School of Statistics"
+department: ""
+
+context: "Group 12"
+date: \today
+
+# ---
+colorlinks: yes
+
+linkcolor: "black"
+citecolor: "blue"
+urlcolor:  "blue"
+
+links-as-notes: no
+# ---
+output:
+  pdf_document:
+    template: template/main.tex
+    toc: yes
+    toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  cache = TRUE,
+  echo = F,
+  eval = T,	
+  	
+  warning = F,	
+  message = F,
+  
+  	
+  out.width= "80%",
+  fig.align = "center",	
+  fig.path = "resources/figs/"
+  
+)	
+
+# To display models in formula
+# library(equatiomatic)
+# equatiomatic::extract_eq(model, use_coefs = TRUE)
+```
+
+```{r import, appendix=T}
+gas = read.table("./resources/data/gasflorida.txt", header = F)
+gas = ts(gas, start=1991, end=1999 + 7/12, frequency = 12)
+```
+
+\section{Introduction}
+
+
+
+\begin{rmk}
+The file describing the data mentions that the time series ends in August 1998, nevertheless the length of the data being 104, the time series ends in August 1999. This temporality will thus be used throughout the document.
+\end{rmk}
+
+
+U.S. Natural Gas State Data 
+Deliveries to Residential Consumers
+Natural Gas Deliveries to Commercial Consumers (Excluding Vehicle Fuel) in Florida (MMcf)
+Monthly - from jan. 1991 to aug. 1998
+
+Remark:"Mcf" means 1,000 cubic feet of natural gas; "Mmcf" means 1,000 Mcf
+
+
+\section{Conclusion}
+
+
+<!------>
+\appendix
+
+\section{Appendix}
+\subsection{Code}
+
+<!-- Remove this part -->
+\bigskip
+\begin{note*}[about the code]
+  All the chunks with the parameter 'appendix' set to TRUE will be outputed below.  
+\end{note*}
+<!---------End---------->
+
+```{r appendix_code, eval=FALSE, echo=TRUE, attr.source='.numberLines', ref.label=knitr::all_labels(appendix==T)}
+```
