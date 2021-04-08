@@ -115,20 +115,40 @@ plot.superposed.ts(gas, title="Superposed monthly deliveries of gas", xlab="Mont
 
 ```
 
+\blindtext
+
+## Theorical point of view
+
+\pagebreak
+# Data transformation
+## Deseasonalize and delinearize
+### Theorical aspect
+
+## Residuals analysis
+
+# Models selection
+## Comparison
 
 
-# Model selection
-## 
-## 
+# Models validation
+
+## Coefficients
+## Portemanteau
+## Predictive power
+
+# Predictions
 
 # Conclusion
-
 
 <!------>
 \newpage
 \appendix
 
 # Appendix
+
+## Figures
+
+
 ## Code
 
 \bigskip
@@ -137,5 +157,4 @@ plot.superposed.ts(gas, title="Superposed monthly deliveries of gas", xlab="Mont
 \end{mdframed}
 
 ```{r appendix_code, eval=FALSE, echo=TRUE, attr.source='.numberLines', ref.label=knitr::all_labels(appendix==T)}
-# END
 ```
