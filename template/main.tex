@@ -1,0 +1,128 @@
+\documentclass[a4paper, 12pt]{article}
+\usepackage{template/sleek-settings}
+
+% DEFAULT MARDKOWN SETUP
+
+\RequirePackage[
+    unicode=true,
+    breaklinks=true,
+    pdfusetitle,
+    linktoc=page,
+    $if(colorlinks)$
+        colorlinks=true,
+        linkcolor=$if(linkcolor)$$linkcolor$$else$Maroon$endif$,
+        citecolor=$if(citecolor)$$citecolor$$else$Blue$endif$,
+        urlcolor=$if(urlcolor)$$urlcolor$$else$Blue$endif$,
+    $else$
+        pdfborder={0 0 0},
+    $endif$
+]{hyperref}
+
+$if(highlighting-macros)$
+$highlighting-macros$
+$endif$
+
+$if(verbatim-in-note)$
+\usepackage{fancyvrb}
+\VerbatimFootnotes % allows verbatim text in footnotes
+$endif$
+
+$if(tables)$
+\usepackage{longtable,booktabs}
+$endif$
+
+$if(graphics)$
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+$endif$
+
+$if(links-as-notes)$
+% Make links footnotes instead of hotlinks:
+\renewcommand{\href}[2]{#2\footnote{\url{#1}}}
+$endif$
+
+$if(strikeout)$
+\usepackage[normalem]{ulem}
+% avoid problems with \sout in headers with hyperref:
+\pdfstringdefDisableCommands{\renewcommand{\sout}{}}
+$endif$
+
+\urlstyle{same}
+
+% END OF DEFAULT MARKDOWN SETUP
+% DYNAMIC VARIABLES
+
+$if(title)$
+    \title{$title$}
+$else$
+    \title{Rmarkdown document}
+$endif$
+
+$if(subtitle)$
+    \subtitle{$subtitle$}
+$else$
+    \subtitle{Custom template}
+$endif$
+
+$if(authors)$
+    \author{$for(authors)$\textsc{$authors$} $sep$ \and $endfor$ $if(noma)$ \\ Noma: $for(noma)$ $noma$ $sep$ \and $endfor$ $endif$}
+$else$
+    \author{\textsc{Lionel LAMY} \\ Noma: 1294-1700}
+$endif$
+
+$if(logo)$
+    \logo{logo}
+$else$
+    \logo{resources/img/UCLouvain_Logo_Sciences.jpg}
+$endif$
+
+$if(institute)$
+    \institute{$institute$}
+$else$
+    \institute{Université catholique de Louvain}
+$endif$
+
+$if(faculty)$
+    \faculty{$faculty$}
+$else$
+    \faculty{Louvain School of Statistics}
+$endif$
+
+$if(department)$
+    \department{$department$}
+$endif$
+
+$if(context)$
+    \context{$context$}
+$endif$
+
+$if(date)$
+    \date{$date$}
+$else$
+    \date{\today}
+$endif$
+
+% END OF DYNAMIC VARIABLES
+
+\begin{document}
+
+    \maketitle
+    $if(toc)$
+    {
+     \setcounter{tocdepth}{$toc-depth$}
+     \romantableofcontents
+    }
+    $endif$
+
+
+    $body$
+
+
+\end{document}
