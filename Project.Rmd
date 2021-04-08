@@ -14,11 +14,13 @@ noma:
 # You can remove settings below
 # Defaults values are defined
 
+# logo: ""
+
 institute: "Université catholique de Louvain"
 faculty: "Louvain School of Statistics"
 department: ""
 
-context: "Group 12"
+context: ""
 date: \today
 
 # ---
@@ -30,6 +32,8 @@ urlcolor:  "blue"
 
 links-as-notes: no
 # ---
+header-includes:
+  - \usepackage{blindtext}
 output:
   pdf_document:
     template: template/main.tex
@@ -58,43 +62,80 @@ knitr::opts_chunk$set(
 # equatiomatic::extract_eq(model, use_coefs = TRUE)
 ```
 
-```{r import, appendix=T}
-gas = read.table("./resources/data/gasflorida.txt", header = F)
-gas = ts(gas, start=1991, end=1999 + 7/12, frequency = 12)
+```{r requirements, appendix=TRUE}
+# Import facility functions
+source("./resources/scripts/fonctionsSeriesChrono.R")
+
+source("./resources/scripts/custom_plots.R")
+source("./resources/scripts/custom_timeseries.R")
+
 ```
 
-\section{Introduction}
+
+```{r data_import, appendix=TRUE}
+# Import the gas dataset
+gas = read.table("./resources/data/gasflorida.txt", header = F)
+gas = ts(gas, start=1991, frequency = 12)
+
+# Define some useful variables
+gas.attributes = attributes(gas)$tsp
+gas.start = gas.attributes[1]
+gas.end = gas.attributes[2]
+gas.freq = gas.attributes[3]
+
+```
+
+# Introduction
+
+In this project we will focus on the analysis of real data. These data are provided by the U.S. Natural Gas State Data and concern the aggregated monthly quantity of natural gas delivered to residential and commercial consumers (excluding vehicle fuel) in Florida. Aggregated on a monthly basis, the data are presented in millions of cubic feet (MMcf^[\quad"Mcf" means 1,000 cubic feet of natural gas; "MMcf" means 1,000 Mcf.]) and cover the period from January 1991 to August 1999.
+
+<!-- \begin{rmk} -->
+<!-- The file describing the data originally states that the time series ends in August 1998, nevertheless the length of the data being `r length(gas)`, the time series ends in August 1999. This temporality will thus be used throughout the document. -->
+<!-- \end{rmk} -->
+
+We will proceed to the beginning of this report with a first visual discovery of the dataset. Then, we will eventually apply a series of transformations to stabilize the variance, remove possible trends and seasonality. Next, we will analyze the autocorrelation and partial autocorrelation functions in order to have a first intuition on the type of model to fit. Following this, we will establish which model would be the most appropriate for our data and verify the insight of our choice by several methods such as a significance test of the coefficients, an analysis of the residuals (by a Portmanteau test) or the evaluation of the predictive capacity "on sample". The final objective is to be able to give a prediction interval for future values over roughly one year.
+
+# Data discovery
+
+```{r}
+# Plot the decomposition of the data
+plot.decompose.ts(gas, main="Decomposition of the deliveries of natural gas", cex.lab=.9, cex.axis=.95, 
+                  xaxp=c(floor(gas.start), floor(gas.end), floor(gas.end-gas.start))
+                  )
+
+```
+
+In the graph above, we can observe an almost perfect seasonality with maximum values during the months of January and minimum from June to August. These results are hardly surprising given the nature of the data. Indeed, it seems normal that a greater quantity of gas is used in January (as it it the coldest month in Florida^[\quad Source: [weather-us.com](weather-us.com/en/florida-usa-climate)]) and that gas consumption decreases during summer.
+
+Looking at the trend line, we notice that from 1996 onwards the quantity delivered seems to decrease. We will try to keep this in mind when trying to predict future values. 
+
+```{r}
+# Plot the superposed view of the data
+plot.superposed.ts(gas, title="Superposed monthly deliveries of gas", xlab="Month", ylab="MMcf", xlim=c(0.4,12))
+
+```
 
 
 
-\begin{rmk}
-The file describing the data mentions that the time series ends in August 1998, nevertheless the length of the data being 104, the time series ends in August 1999. This temporality will thus be used throughout the document.
-\end{rmk}
+# Model selection
+## 
+## 
 
-
-U.S. Natural Gas State Data 
-Deliveries to Residential Consumers
-Natural Gas Deliveries to Commercial Consumers (Excluding Vehicle Fuel) in Florida (MMcf)
-Monthly - from jan. 1991 to aug. 1998
-
-Remark:"Mcf" means 1,000 cubic feet of natural gas; "Mmcf" means 1,000 Mcf
-
-
-\section{Conclusion}
+# Conclusion
 
 
 <!------>
+\newpage
 \appendix
 
-\section{Appendix}
-\subsection{Code}
+# Appendix
+## Code
 
-<!-- Remove this part -->
 \bigskip
-\begin{note*}[about the code]
-  All the chunks with the parameter 'appendix' set to TRUE will be outputed below.  
-\end{note*}
-<!---------End---------->
+\begin{mdframed}[style=thicc, frametitle=Note, frametitlebackgroundcolor=black!30]
+  For reproducibility purposes, the complete R project containing the source code and the results is available on https://github.com/lamylio/LSTAT2170-Project.
+\end{mdframed}
 
 ```{r appendix_code, eval=FALSE, echo=TRUE, attr.source='.numberLines', ref.label=knitr::all_labels(appendix==T)}
+# END
 ```

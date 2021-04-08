@@ -54,6 +54,10 @@ $if(strikeout)$
 \pdfstringdefDisableCommands{\renewcommand{\sout}{}}
 $endif$
 
+$for(header-includes)$
+    $header-includes$
+$endfor$
+
 \urlstyle{same}
 
 % END OF DEFAULT MARKDOWN SETUP
@@ -120,6 +124,10 @@ $endif$
      \romantableofcontents
     }
     $endif$
+    
+    $for(include-before)$
+        $include-before$
+    $endfor$
 
 
     $body$
