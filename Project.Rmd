@@ -4,12 +4,6 @@
 title: "LSTAT2170 - Time series"
 subtitle: "Final Project"
 
-authors:
-  - "Lionel Lamy"
-  
-noma: 
-  - "1294-1700"
-
 # ---
 # You can remove settings below
 # Defaults values are defined
@@ -30,7 +24,7 @@ linkcolor: "black"
 citecolor: "blue"
 urlcolor:  "blue"
 
-links-as-notes: no
+links-as-notes: false
 # ---
 header-includes:
   - \usepackage{blindtext}
@@ -45,95 +39,167 @@ output:
 knitr::opts_chunk$set(
   cache = TRUE,
   echo = F,
-  eval = T,	
-  	
-  warning = F,	
+  eval = T,
+
+  warning = F,
   message = F,
-  
-  	
-  out.width= "80%",
-  fig.align = "center",	
-  fig.path = "resources/figs/"
-  
-)	
+
+  out.width = "80%",
+  fig.align = "center",
+  fig.path = "resources/figs/",
+
+  tidy = TRUE,
+  tidy.opts = list(width.cutoff = 65)
+)
 
 # To display models in formula
 # library(equatiomatic)
 # equatiomatic::extract_eq(model, use_coefs = TRUE)
+
+# remotes::install_github('yihui/formatR')
+library(formatR)
 ```
 
-```{r requirements, appendix=TRUE}
-# Import facility functions
-source("./resources/scripts/fonctionsSeriesChrono.R")
+```{r requirements, appendix=TRUE, cache=FALSE}
+#' Import facility functions in a separate attached environment
+#' To keep our global clean
 
-source("./resources/scripts/custom_plots.R")
-source("./resources/scripts/custom_timeseries.R")
+facilities <- new.env()
+source("./resources/scripts/fonctionsSeriesChrono.R", local = facilities)
+
+# Please check the github repository
+source("./resources/scripts/custom_plots.R", local = facilities)
+source("./resources/scripts/sarima_model_selection.R", local = facilities)
+source("./resources/scripts/ts_significance_test.R", local = facilities)
+
+attach(facilities, name = "facilities")
 
 ```
-
 
 ```{r data_import, appendix=TRUE}
 # Import the gas dataset
-gas = read.table("./resources/data/gasflorida.txt", header = F)
-gas = ts(gas, start=1991, frequency = 12)
+gas <- read.table("./resources/data/gasflorida.txt", header = F)
+gas <- ts(gas, start = 1991, frequency = 12)
 
 # Define some useful variables
-gas.attributes = attributes(gas)$tsp
-gas.start = gas.attributes[1]
-gas.end = gas.attributes[2]
-gas.freq = gas.attributes[3]
+gas.start <- attributes(gas)$tsp[1]
+gas.end <- attributes(gas)$tsp[2]
+gas.freq <- attributes(gas)$tsp[3]
+gas.t <- seq(gas.start, to = gas.end, length = length(gas))
+gas.xaxp <- c(floor(gas.start), floor(gas.end), floor(gas.end - gas.start))
 
 ```
 
 # Introduction
 
-In this project we will focus on the analysis of real data. These data are provided by the U.S. Natural Gas State Data and concern the aggregated monthly quantity of natural gas delivered to residential and commercial consumers (excluding vehicle fuel) in Florida. Aggregated on a monthly basis, the data are presented in millions of cubic feet (MMcf^[\quad"Mcf" means 1,000 cubic feet of natural gas; "MMcf" means 1,000 Mcf.]) and cover the period from January 1991 to August 1999.
+In this project we will focus on the analysis of real data. These data are the U.S. Natural Gas State Data and concern the monthly quantity of natural gas delivered to residential and commercial consumers (excluding vehicle fuel) in Florida. Aggregated on a monthly basis, the data are presented in millions of cubic feet (MMcf[^1]) and cover the period from January 1991 to August 1999.
 
-<!-- \begin{rmk} -->
-<!-- The file describing the data originally states that the time series ends in August 1998, nevertheless the length of the data being `r length(gas)`, the time series ends in August 1999. This temporality will thus be used throughout the document. -->
-<!-- \end{rmk} -->
+[^1]: \quad"Mcf" means 1,000 cubic feet of natural gas; "MMcf" means 1,000 Mcf.
 
 We will proceed to the beginning of this report with a first visual discovery of the dataset. Then, we will eventually apply a series of transformations to stabilize the variance, remove possible trends and seasonality. Next, we will analyze the autocorrelation and partial autocorrelation functions in order to have a first intuition on the type of model to fit. Following this, we will establish which model would be the most appropriate for our data and verify the insight of our choice by several methods such as a significance test of the coefficients, an analysis of the residuals (by a Portmanteau test) or the evaluation of the predictive capacity "on sample". The final objective is to be able to give a prediction interval for future values over roughly one year.
 
 # Data discovery
 
-```{r}
-# Plot the decomposition of the data
-plot.decompose.ts(gas, main="Decomposition of the deliveries of natural gas", cex.lab=.9, cex.axis=.95, 
-                  xaxp=c(floor(gas.start), floor(gas.end), floor(gas.end-gas.start))
-                  )
+By decomposing the time series into pieces we can have a first insight of the data. 
+
+The first obvious observation we can make by looking at just the first line is that we are dealing with seasonal data. Indeed, we can see in the third row an almost perfect seasonality with maximum values at the beginning of each year and minimum values towards the middle.  These results are hardly surprising given the nature of the data. Indeed, it seems normal that a greater quantity of gas is used during winter and that gas consumption decreases during summer.
+
+
+```{r plot_decompose, appendix=TRUE}
+# Plot the decomposition of the data (see custom_plot.R)
+plot.decompose.ts(gas, main = "Decomposition of the deliveries of natural gas", cex.lab = .9, cex.axis = .95, xaxp = gas.xaxp)
+
+```
+\pagebreak 
+
+Looking at the second line of the graph, we see that the data do not really seem to vary except in 1996-1997 when a decrease is noticeable. A closer look at the first line shows this phenomenon. 
+
+Another interesting way to present the data is to display the evolution of the deliveries by stacking the years line by line. The outcome is fortunately the same. We notice a strong seasonality (since the lines all follow the same pattern) as well as a small decrease that seems to start from 1997 (colored dashed lines). On the other hand, the lines seems to remain relatively close to each other and there is no drastic change in variance.
+
+```{r plot_superposed, appendix=TRUE}
+# Plot the superposed view of the data (see custom_plot.R)
+plot.superposed.ts(gas, title = "Superposed monthly deliveries of gas", xlab = "Month", ylab = "MMcf", dashed_thick_from = c(6, 8), xlim = c(0, 12))
 
 ```
 
-In the graph above, we can observe an almost perfect seasonality with maximum values during the months of January and minimum from June to August. These results are hardly surprising given the nature of the data. Indeed, it seems normal that a greater quantity of gas is used in January (as it it the coldest month in Florida^[\quad Source: [weather-us.com](weather-us.com/en/florida-usa-climate)]) and that gas consumption decreases during summer.
-
-Looking at the trend line, we notice that from 1996 onwards the quantity delivered seems to decrease. We will try to keep this in mind when trying to predict future values. 
-
-```{r}
-# Plot the superposed view of the data
-plot.superposed.ts(gas, title="Superposed monthly deliveries of gas", xlab="Month", ylab="MMcf", xlim=c(0.4,12))
-
-```
-
-\blindtext
-
-## Theorical point of view
-
-\pagebreak
 # Data transformation
-## Deseasonalize and delinearize
-### Theorical aspect
 
-## Residuals analysis
+The previous statements make us decide not to apply a logarithmic transformation on the data. On the other hand, as we aim to examine the correlation structure of the residuals in the next section, we need to have stationary data. Meaning that it is necessary to deseasonalize and delinearize the data in order to go further with the visual analysis.
+
+## Deseasonalize and detrend
+
+For this purpose, we will use the method of (iterated) differences. As a first step, we will first-differencing the time series to remove the linear trend. Next, we will repeat this process at a lag equal to the periodicity. That is, we will use the value 12 since the data is collected monthly and that the seasonality is annual.
+
+
+```{r, deseasonalize_detrend, appendix=TRUE}
+# Remove the seasonality using lag 12 as we have monthly data
+gas.1 <- diff(gas, lag=1, differences = 1)
+# Remove global trend
+gas.2 <- diff(gas.1, lag = 12, differences = 1)
+
+```
+
+```{r, fig.height=3.5, appendix=TRUE}
+# Removed trend
+plot(gas.1, main = "Detrended time series", sub="Difference of order 1", xaxp = gas.xaxp)
+abline(reg = lm(gas.1 ~ tail(gas.t, -1)), col = rgb(1, 0, 0, .8), lty = 1)
+legend("topright", legend = "Linear trend", col = 2, cex = .8, lty = 1)
+```
+
+In the first figure above, we observe that the linear trend is well removed since the data are now centered around zero but we still have a visible periodicity. This particularity seems to be corrected on the second graph below and we now have a time series that appears to be random errors.
+
+```{r, fig.height=3.5, appendix=TRUE}
+# Removed trend and seasonality
+plot(gas.2, main = "Detrended and deseasonalized time series", sub="Difference of order 1 at lag 12", xaxp = gas.xaxp)
+abline(reg = lm(gas.2 ~ tail(gas.t, -12-1)), col = rgb(1, 0, 0, .8), lty = 1)
+legend("topright", legend = "Linear trend", col = 2, cex = .8, lty = 1)
+
+```
+
+
+## Modelling the stationary component
+
+
+
+As the simultaneous look on the ACF and PACF does not suggest a pure moving-average (MA) or autoregressive (AR) model as we have oscillating autocorrelations. We might therefore move towards an ARMA model with values .
+
+
+\begin{note}
+  Voir pages 135 à 140 pour la théorie concernant les processus SARIMA et les étapes à suivre
+  
+  Il faut regarder les lags 1,2,3,4 pour la dépendance annuelle (P,Q) mais seulement [0,1[  (12-1 lags) pour la mensuelle (p,q)
+  
+  On a seulement enlevé un élément deterministique de saisonnalité, si correlation significative au lag 1, alors il pourrait rester une composante stochastique.. donc on fit un S-ARIMA !
+  
+\end{note}
+
+```{r plot_acf_pacf, appendix=TRUE, fig.show="hold", out.width="49%", fig.width=5.5}
+# Plot the ACF and PACF
+plot.acf.pacf(gas.2)
+
+```
 
 # Models selection
-## Comparison
 
+<!-- Now it's time to figure out which model would be the best fit to the data. To do this, we will iterate over all possible SARIMA models with AR and MA degrees up to 2. In order to compare the effectiveness of the different models, we will use the AIC. The values displayed below are normalized and relative to the model with the lowest AIC.  -->
+
+## Definition
+
+## Selection
+
+```{r model_selection, eval=F, appendix=FALSE, comment="",results=F}
+# Model comparison via AIC. (see sarima_model_selection.R)
+model.aic = sarima_model_selection(gas, max.pq = c(2,2), max.PQ = c(1,1), d = 1, D = 1, percent.best = .05)
+```
+
+## Comparison
 
 # Models validation
 
 ## Coefficients
+
 ## Portemanteau
+
 ## Predictive power
 
 # Predictions
@@ -141,6 +207,7 @@ plot.superposed.ts(gas, title="Superposed monthly deliveries of gas", xlab="Mont
 # Conclusion
 
 <!------>
+
 \newpage
 \appendix
 
@@ -148,13 +215,23 @@ plot.superposed.ts(gas, title="Superposed monthly deliveries of gas", xlab="Mont
 
 ## Figures
 
+```{r plot_gas, appendix=TRUE}
+#############
+#' Appendix #
+
+# Plot the complete dataset non decomposed
+plot(gas, main = "Gas deliveries in Florida", xaxp = gas.xaxp)
+```
 
 ## Code
 
 \bigskip
 \begin{mdframed}[style=thicc, frametitle=Note, frametitlebackgroundcolor=black!30]
   For reproducibility purposes, the complete R project containing the source code and the results is available on https://github.com/lamylio/LSTAT2170-Project.
+  
+  The below section is automatically generated and tidied. 
 \end{mdframed}
 
-```{r appendix_code, eval=FALSE, echo=TRUE, attr.source='.numberLines', ref.label=knitr::all_labels(appendix==T)}
+```{r appendix_code, eval=FALSE, echo=TRUE, ref.label=knitr::all_labels(appendix==T)}
+
 ```
