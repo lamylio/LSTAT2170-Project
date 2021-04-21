@@ -29,10 +29,11 @@ links-as-notes: false
 header-includes:
   - \usepackage{blindtext}
 output:
-  pdf_document:
+  bookdown::pdf_document2:
     template: template/main.tex
     toc: yes
     toc_depth: 3
+    fig_caption: yes
 ---
 
 ```{r setup, include=FALSE}
@@ -57,7 +58,6 @@ knitr::opts_chunk$set(
 # equatiomatic::extract_eq(model, use_coefs = TRUE)
 
 # remotes::install_github('yihui/formatR')
-library(formatR)
 ```
 
 ```{r requirements, appendix=TRUE, cache=FALSE}
@@ -100,21 +100,20 @@ We will proceed to the beginning of this report with a first visual discovery of
 
 # Data discovery
 
-By decomposing the time series into pieces we can have a first insight of the data. 
-
-The first obvious observation we can make by looking at just the first line is that we are dealing with seasonal data. Indeed, we can see in the third row an almost perfect seasonality with maximum values at the beginning of each year and minimum values towards the middle.  These results are hardly surprising given the nature of the data. Indeed, it seems normal that a greater quantity of gas is used during winter and that gas consumption decreases during summer.
-
+Considering our data to be an additive model $Y_t = T_t + S_t + \epsilon_t$, we can have a first insight by decomposing the series into trend ($T$), seasonal ($S$) and random ($\epsilon$) pieces. A plot containing the undecomposed data is available in the appendix. See \ref{figures}.
 
 ```{r plot_decompose, appendix=TRUE}
 # Plot the decomposition of the data (see custom_plot.R)
 plot.decompose.ts(gas, main = "Decomposition of the deliveries of natural gas", cex.lab = .9, cex.axis = .95, xaxp = gas.xaxp)
 
 ```
-\pagebreak 
+\vspace{-.5em}
+
+The first obvious observation we can make by looking at just the first line is that we are dealing with seasonal data. Indeed, we can see in the third row an almost perfect seasonality with maximum values at the beginning of each year and minimum values towards the middle.  These results are hardly surprising given the nature of the data. Indeed, it seems normal that a greater quantity of gas is used during winter and that gas consumption decreases during summer.
 
 Looking at the second line of the graph, we see that the data do not really seem to vary except in 1996-1997 when a decrease is noticeable. A closer look at the first line shows this phenomenon. 
 
-Another interesting way to present the data is to display the evolution of the deliveries by stacking the years line by line. The outcome is fortunately the same. We notice a strong seasonality (since the lines all follow the same pattern) as well as a small decrease that seems to start from 1997 (colored dashed lines). On the other hand, the lines seems to remain relatively close to each other and there is no drastic change in variance.
+Another interesting way to present the data is to display the evolution of the deliveries by stacking the years line by line. The outcome is fortunately the same. We notice a strong seasonality (since the lines all follow the same pattern) as well as a small decrease that seems to start from 1997 (colored dashed lines). Moreover, the lines seems to remain relatively close to each other and there is no drastic change in variance over time.
 
 ```{r plot_superposed, appendix=TRUE}
 # Plot the superposed view of the data (see custom_plot.R)
@@ -122,14 +121,15 @@ plot.superposed.ts(gas, title = "Superposed monthly deliveries of gas", xlab = "
 
 ```
 
-# Data transformation
+# Box-Jenkins
 
-The previous statements make us decide not to apply a logarithmic transformation on the data. On the other hand, as we aim to examine the correlation structure of the residuals in the next section, we need to have stationary data. Meaning that it is necessary to deseasonalize and delinearize the data in order to go further with the visual analysis.
+The previous statements make us decide not to apply a logarithmic transformation on the data. On the other hand, as we aim to examine the correlation structure of the residuals, we need to achieve stationarity. Meaning that it is necessary to deseasonalize and delinearize the data in order to go further with the visual analysis.
 
 ## Deseasonalize and detrend
 
-For this purpose, we will use the method of (iterated) differences. As a first step, we will first-differencing the time series to remove the linear trend. Next, we will repeat this process at a lag equal to the periodicity. That is, we will use the value 12 since the data is collected monthly and that the seasonality is annual.
+For this purpose, we will use the method of (iterated) differences. Considering that $Y_t$ is the time series at period $t$, then the first difference at lag $k$ is $Y_t - Y_{t-k}$. As a first step, we apply the latter on the data at lag 1 to remove the linear trend. Next, we repeat this process at a lag equal to the periodicity. That is, we use the value 12 since the data are collected monthly and that the seasonality is annual.
 
+Note that the resulting time series is therefore shifted by $k$ periods. 
 
 ```{r, deseasonalize_detrend, appendix=TRUE}
 # Remove the seasonality using lag 12 as we have monthly data
@@ -139,43 +139,47 @@ gas.2 <- diff(gas.1, lag = 12, differences = 1)
 
 ```
 
-```{r, fig.height=3.5, appendix=TRUE}
+```{r, fig.height=4.5, appendix=TRUE}
 # Removed trend
-plot(gas.1, main = "Detrended time series", sub="Difference of order 1", xaxp = gas.xaxp)
+plot(gas.1, main = "Detrended time series", sub="First difference at lag k=1", xaxp = gas.xaxp)
 abline(reg = lm(gas.1 ~ tail(gas.t, -1)), col = rgb(1, 0, 0, .8), lty = 1)
 legend("topright", legend = "Linear trend", col = 2, cex = .8, lty = 1)
+
 ```
 
-In the first figure above, we observe that the linear trend is well removed since the data are now centered around zero but we still have a visible periodicity. This particularity seems to be corrected on the second graph below and we now have a time series that appears to be random errors.
+In the first figure above, we observe that the linear trend is well removed since the data are now centered around zero, but we still have a visible periodicity. This particularity seems to be corrected on the second graph below as we now have a time series that appears to be random.
 
-```{r, fig.height=3.5, appendix=TRUE}
+```{r, fig.height=4.5, appendix=TRUE}
 # Removed trend and seasonality
-plot(gas.2, main = "Detrended and deseasonalized time series", sub="Difference of order 1 at lag 12", xaxp = gas.xaxp)
+plot(gas.2, main = "Detrended and deseasonalized time series", xaxp = gas.xaxp, sub="First difference at lag k=12")
 abline(reg = lm(gas.2 ~ tail(gas.t, -12-1)), col = rgb(1, 0, 0, .8), lty = 1)
 legend("topright", legend = "Linear trend", col = 2, cex = .8, lty = 1)
 
 ```
 
+\pagebreak
 
-## Modelling the stationary component
+## ACF and PACF
+
+Now that our data is differenced and assumed to be stationary, we can examine the correlation structure and have an intuition of the values to feed into the model. We will use the auto-correlation and partial auto-correlation functions for this purpose. 
+
+To recall, the former describes how well the present value is correlated with its past values while the latter does the same but removing the linear dependence at intermediate lags (so basically with the residuals).
 
 
+```{r plot_acf_pacf_yearly, appendix=TRUE, fig.show="hold", out.width="49%", fig.width=5.5}
+# Plot the ACF and PACF, yearly basis
+plot.acf.pacf(gas.2, lag.max = length(gas.2), simplify = F, linked_by_line = F, titles=c("Yearly ACF", "Yearly PACF"))
 
-As the simultaneous look on the ACF and PACF does not suggest a pure moving-average (MA) or autoregressive (AR) model as we have oscillating autocorrelations. We might therefore move towards an ARMA model with values .
+```
+In the figures above, we notice that both ACF and PACF tend towards zero. The values fall below the confidence interval after lag 1 for the ACF and lag 2 (or 1 according to the degree of tolerance) for the PACF. The simultaneous look on the ACF and PACF might suggest an ARMA(0,1) or ARMA(1,1) on a yearly basis.
 
+Although kind of predictable, the presence of significant correlations at lag 1 is nevertheless intriguing. The transformations performed have only removed a deterministic element of seasonality and a stochastic component could indeed remain. This leads us to a S-ARIMA model.
 
-\begin{note}
-  Voir pages 135 à 140 pour la théorie concernant les processus SARIMA et les étapes à suivre
-  
-  Il faut regarder les lags 1,2,3,4 pour la dépendance annuelle (P,Q) mais seulement [0,1[  (12-1 lags) pour la mensuelle (p,q)
-  
-  On a seulement enlevé un élément deterministique de saisonnalité, si correlation significative au lag 1, alors il pourrait rester une composante stochastique.. donc on fit un S-ARIMA !
-  
-\end{note}
+Therefore, let analyze the ACF and PACF on a monthly basis, i.e. between lag [0 and 1[. Both show a significant value at first lag. Note that in the case of ACF, the value at time 0 is always 1. On a monthly basis, we might thus move with an ARMA(1,1).
 
-```{r plot_acf_pacf, appendix=TRUE, fig.show="hold", out.width="49%", fig.width=5.5}
-# Plot the ACF and PACF
-plot.acf.pacf(gas.2)
+```{r plot_acf_pacf_monthly, appendix=TRUE, fig.show="hold", out.width="49%", fig.width=5.5}
+# Plot the ACF and PACF, monthly basis
+plot.acf.pacf(gas.2, lag.max = gas.freq-1, simplify = F, linked_by_line = T, titles=c("ACF", "PACF"), sub="Up to lag 1, monthly dependence")
 
 ```
 
@@ -190,6 +194,7 @@ plot.acf.pacf(gas.2)
 ```{r model_selection, eval=F, appendix=FALSE, comment="",results=F}
 # Model comparison via AIC. (see sarima_model_selection.R)
 model.aic = sarima_model_selection(gas, max.pq = c(2,2), max.PQ = c(1,1), d = 1, D = 1, percent.best = .05)
+
 ```
 
 ## Comparison
@@ -214,10 +219,11 @@ model.aic = sarima_model_selection(gas, max.pq = c(2,2), max.PQ = c(1,1), d = 1,
 # Appendix
 
 ## Figures
+\label{figures}
 
 ```{r plot_gas, appendix=TRUE}
-#############
-#' Appendix #
+#======== #
+#'Appendix #
 
 # Plot the complete dataset non decomposed
 plot(gas, main = "Gas deliveries in Florida", xaxp = gas.xaxp)
@@ -231,6 +237,11 @@ plot(gas, main = "Gas deliveries in Florida", xaxp = gas.xaxp)
   
   The below section is automatically generated and tidied. 
 \end{mdframed}
+
+```{r appendix_pre}
+library(formatR)
+```
+
 
 ```{r appendix_code, eval=FALSE, echo=TRUE, ref.label=knitr::all_labels(appendix==T)}
 

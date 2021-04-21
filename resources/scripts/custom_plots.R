@@ -52,29 +52,30 @@ plot.superposed.ts <- function(time.serie, title = "Superposed", dashed_thick_fr
 }
 
 # ---------------------------------------
-plot.acf.pacf = function(time.serie, lag.max = 50, linked_by_line=T){
+plot.acf.pacf = function(time.serie, lag.max = 50, simplify=T, linked_by_line=T, titles=c("ACF, PACF"), ...){
   
   # Retrieve the ACF/PACF
   ts.acf = acf(x=time.serie, lag=lag.max, plot = F)
   ts.pacf = pacf(x=time.serie, lag=lag.max, plot=F)
   
-  # Only keep the rounded lags
-  # Improve the visualization
-  ts.seq = seq(from=frequency(time.serie), to=lag.max, by=frequency(time.serie))
-  
-  ts.acf$acf = array(ts.acf$acf[c(1,ts.seq+1)], dim=c(length(ts.seq), 1, 1))
-  ts.acf$lag = array(ts.acf$lag[c(1,ts.seq+1)], dim=c(length(ts.seq), 1, 1))
-  
-  ts.pacf$acf = array(ts.pacf$acf[c(1,ts.seq)], dim=c(length(ts.seq), 1, 1))
-  ts.pacf$lag = array(ts.pacf$lag[c(1, ts.seq)], dim=c(length(ts.seq), 1, 1))
-  
+  if(simplify){
+    # Only keep the rounded lags
+    # Improve the visualization
+    ts.seq = seq(from=frequency(time.serie), to=lag.max, by=frequency(time.serie))
+    
+    ts.acf$acf = array(ts.acf$acf[c(1,ts.seq+1)], dim=c(length(ts.seq), 1, 1))
+    ts.acf$lag = array(ts.acf$lag[c(1,ts.seq+1)], dim=c(length(ts.seq), 1, 1))
+    
+    ts.pacf$acf = array(ts.pacf$acf[c(1,ts.seq)], dim=c(length(ts.seq), 1, 1))
+    ts.pacf$lag = array(ts.pacf$lag[c(1, ts.seq)], dim=c(length(ts.seq), 1, 1))
+  }
   # Plot the modified ones
   # Add lines to improve further the visualization
   
-  plot(ts.acf, ylim=c(min(ts.acf$acf)-0.2, min(max(ts.acf$acf+0.3), 1)), main="ACF", lwd=2)
+  plot(ts.acf, ylim=c(min(ts.acf$acf)-0.2, min(max(ts.acf$acf+0.3), 1)), main=titles[1], lwd=2, ...)
   if(linked_by_line){lines(ts.acf$lag, ts.acf$acf, type="b", col=rgb(0,0,0,.7))}
   
-  plot(ts.pacf, ylim=c(min(ts.pacf$acf)-0.2, min(max(ts.pacf$acf+0.3), 1)), main="PACF", lwd=2)
+  plot(ts.pacf, ylim=c(min(ts.pacf$acf)-0.2, min(max(ts.pacf$acf+0.3), 1)), main=titles[2], lwd=2, ...)
   if(linked_by_line){lines(ts.pacf$lag, ts.pacf$acf, type="b", col=rgb(0,0,0,.7))}
 }
 
