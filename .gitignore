@@ -37,6 +37,8 @@ vignettes/*.pdf
 *.toc
 *.xml
 *.bcf
+*.aux
+*.out
 
 # R Environment Variables
 .Renviron
