@@ -165,15 +165,15 @@ Now that our data is differenced and assumed to be stationary, we can examine th
 
 To recall, the former describes how well the present value is correlated with its past values while the latter does the same but removing the linear dependence at intermediate lags (so basically with the residuals).
 
-
 ```{r plot_acf_pacf_yearly, appendix=TRUE, fig.show="hold", out.width="49%", fig.width=5.5}
 # Plot the ACF and PACF, yearly basis
 plot.acf.pacf(gas.2, lag.max = length(gas.2), simplify = F, linked_by_line = F, titles=c("Yearly ACF", "Yearly PACF"))
 
 ```
+
 In the figures above, we notice that both ACF and PACF tend towards zero. The values fall below the confidence interval after lag 1 for the ACF and lag 2 (or 1 according to the degree of tolerance) for the PACF. The simultaneous look on the ACF and PACF might suggest an ARMA(0,1) or ARMA(1,1) on a yearly basis.
 
-Although kind of predictable, the presence of significant correlations at lag 1 is nevertheless intriguing. The transformations performed have only removed a deterministic element of seasonality and a stochastic component could indeed remain. This leads us to a S-ARIMA model.
+Although kind of predictable, the presence of significant correlations at lag 1 is nevertheless intriguing. The transformations performed have only removed a deterministic element of seasonality and a stochastic component could indeed remain. This consolidates the idea of using an S-ARIMA model.
 
 Therefore, let analyze the ACF and PACF on a monthly basis, i.e. between lag [0 and 1[. Both show a significant value at first lag. Note that in the case of ACF, the value at time 0 is always 1. On a monthly basis, we might thus move with an ARMA(1,1).
 
@@ -183,23 +183,60 @@ plot.acf.pacf(gas.2, lag.max = gas.freq-1, simplify = F, linked_by_line = T, tit
 
 ```
 
-# Models selection
+# Model selection
 
-<!-- Now it's time to figure out which model would be the best fit to the data. To do this, we will iterate over all possible SARIMA models with AR and MA degrees up to 2. In order to compare the effectiveness of the different models, we will use the AIC. The values displayed below are normalized and relative to the model with the lowest AIC.  -->
+In consideration of the aforementioned elements, we decided to proceed with an S-ARIMA model. Before continuing, we should yet provide a small definition. Basically, an S-ARIMA is an Autoregressive Integrated Moving Average that supports the direct modeling of a Seasonal component (S). Meaning we have 4 more elements ($P$, $D$, $Q$) and $s$, where $P$ is the seasonal AR order, $D$ the seasonal difference order, $Q$ the seasonal MA order and $s$ the seasonal period. 
 
-## Definition
+Putting them together, we obtain a model called SARIMA($p$, $d$, $q$)$\times$($P$, $D$, $Q$)$_s$ if the time series $X_t$ can be transformed into a stationary series without trend or seasonality. 
+$$
+Y_t = \bigtriangledown^d \bigtriangledown^D_s X_t = (1-B)^d\ (1-B^s)^D\ X_t
+$$
+And where the latter can be modelised in the form of a stationary ARMA process
+$$
+\phi(B)\ \Phi(B^s)\ Y_t = \theta(B)\ \Theta(B^s)\ \epsilon_t
+$$
+where $B$ is the backshift operator and where $\phi(z)$, $\Phi(z)$, $\theta(z)$ and $\Theta(z)$ are the generating polynomial of respectively, an AR($p$), AR($P$), MA($q$) and MA($Q$) process.
 
 ## Selection
 
-```{r model_selection, eval=F, appendix=FALSE, comment="",results=F}
+Now it's time to figure out which model would be the best fit to the data. To do this, we will iterate over all possible S-ARIMA models with parameters value up to 2. Nevertheless, following the visual analysis of the previous section, we expect to get models going only up to 1.
+
+In order to compare the effectiveness of the different models, we will primarily use the Akaike information criterion (AIC). However, since the AIC tends to overestimate the number of parameters needed, we will also use the Bayesian information criterion (BIC) as a secondary information.
+
+The results below describe the top 3 models found, from best to worst. First, we notice via the AICR[^2] that we get models with very close results. The winning model has an AIC of 1229, a BIC of 1241 and is composed of 4 parameters. The second one has a higher AIC of only 0.064 and a lower BIC of 2.447 (relative to the first one) but has only 3 parameters. The last model is somewhat less interesting since the increase in AICR is more important and it has as much parameters as the best one. 
+
+[^2]: Akaike information criterion relative to the best model. 
+
+```{r model_selection, appendix=TRUE, comment=""}
 # Model comparison via AIC. (see sarima_model_selection.R)
-model.aic = sarima_model_selection(gas, max.pq = c(2,2), max.PQ = c(1,1), d = 1, D = 1, percent.best = .05)
+model.aic = sarima_model_selection(gas, max.pq = c(2,2), max.PQ = c(1,1), d = 1, D = 1, top=3)
+
+# Second best model (best bic)
+model.bic = arima(gas, order = c(1, 1, 1), seasonal = list(order = c(0, 1, 1), period = gas.freq))
 
 ```
+\pagebreak
 
-## Comparison
+So we will continue with the two best models, namely: 
 
-# Models validation
+S-ARIMA(1,1,1)$\times$(1,1,1)$_{12}$
+$$
+(1-\phi_1B)(1-\Phi_1B^{12})(1-B)^1(1-B^{12})^1\ Y_t = (1+\theta_1B)(1+\Theta_1B^{12})\ \epsilon_t
+$$
+
+with coefficients $\phi_1 = 0.446$, $\Phi_1 = -0.190$, $\theta_1 = -0.835$, and $\Theta_1 = -0.869$
+
+S-ARIMA(1,1,1)$\times$(0,1,1)$_{12}$
+$$
+(1-\phi_1B)(1-B)^1(1-B^{12})^1\ Y_t = (1+\theta_1B)(1+\Theta_1B^{12})\ \epsilon_t
+$$
+with coefficients, $\phi_1 = 0.453$, $\theta_1 = -0.832$, and $\Theta_1 = -1.000$
+
+
+# Models comparison and validation
+
+
+
 
 ## Coefficients
 
@@ -219,7 +256,6 @@ model.aic = sarima_model_selection(gas, max.pq = c(2,2), max.PQ = c(1,1), d = 1,
 # Appendix
 
 ## Figures
-\label{figures}
 
 ```{r plot_gas, appendix=TRUE}
 #======== #

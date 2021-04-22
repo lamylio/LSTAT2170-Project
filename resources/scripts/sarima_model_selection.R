@@ -8,7 +8,7 @@
 #' 
 #' @details 
 #' Returns the model with the lowest AIC.
-#' Displays the percent.best% models in the console.
+#' Displays the top x models in the console.
 #' Given info are AIC, AICR (relative), BIC and the nb of parameters.
 #' 
 #' @note
@@ -22,11 +22,11 @@
 #' @param max.PQ vector of length 2, maximum orders for P and Q.
 #' @param d number of diff of lag 1 for trend elimination.
 #' @param D number of diff of lag 'season' for seasonality elimination.
-#' @param percent.best the percentage of best models returned.
+#' @param top the number of best models returned.
 #' 
 #' @return the model with the lowest AIC.
 
-sarima_model_selection <- function(data, max.pq = c(1, 1), max.PQ = c(1, 1), d = 1, D = 1, percent.best = .1) {
+sarima_model_selection <- function(data, max.pq = c(1, 1), max.PQ = c(1, 1), d = 1, D = 1, top = 3) {
 
   if (!is(data, "ts")) {
     warning("The argument 'data' must be a time series object!", immediate. = T)
@@ -49,17 +49,15 @@ sarima_model_selection <- function(data, max.pq = c(1, 1), max.PQ = c(1, 1), d =
   AIC.table <- round(unlist(results[1, ]), 3)
   BIC.table <- round(unlist(results[2, ]), 3)
 
-  # Retrieve the best one (for comparative purposes)
-  AIC.best <- which(AIC.table == min(AIC.table), T)
-  AICR.table <- AIC.table - AIC.table[AIC.best]
-
-  # Get the percent.best% results
-  AICQ <- quantile(AICR.table, percent.best, na.rm = T)
-  AIC.top <- which(AICR.table <= AICQ)
+  # Relative AIC for comparison
+  AICR.table <- AIC.table - min(AIC.table)
+  
+  # Order them by AICR, up to "best.top"
+  AIC.top <- order(AICR.table)[1:top]
 
   # Print them in a readable way
-  cat("TOP ", percent.best * 100, "% AIC\n", sep = "")
-  cat("MODEL : (p,d,q)x(P,D,Q)[s]\n\n")
+  cat("TOP ", top, " AIC || MODEL : (p,d,q)x(P,D,Q)[s]\n\n", sep = "")
+  
   sapply(AIC.top, function(i) {
     sarima <- unlist(results[3, i])
     m1 <- paste0(sarima[c(1, 6, 2)], collapse = ",") # (p,d,q)
@@ -75,6 +73,6 @@ sarima_model_selection <- function(data, max.pq = c(1, 1), max.PQ = c(1, 1), d =
   })
 
   # Return the best model, based on AIC
-  best <- unlist(results[3, AIC.best])
+  best <- unlist(results[3, AIC.top[1]])
   arima(data, order = c(best[1], d, best[2]), seasonal = list(order = c(best[3], D, best[4]), period = season))
 }
