@@ -7,9 +7,9 @@
 #' fitted to a time series with trend and seasonality removal.
 #' 
 #' @details 
-#' Returns the model with the lowest AIC.
 #' Displays the top x models in the console.
 #' Given info are AIC, AICR (relative), BIC and the nb of parameters.
+#' Returns the model with the lowest AIC if return.best is true
 #' 
 #' @note
 #' Be careful not to set the maximum values too high.
@@ -23,10 +23,11 @@
 #' @param d number of diff of lag 1 for trend elimination.
 #' @param D number of diff of lag 'season' for seasonality elimination.
 #' @param top the number of best models returned.
+#' @param return.best (bool) : is the best AIC model returned. 
 #' 
 #' @return the model with the lowest AIC.
 
-sarima_model_selection <- function(data, max.pq = c(1, 1), max.PQ = c(1, 1), d = 1, D = 1, top = 3) {
+sarima_model_selection <- function(data, max.pq = c(1, 1), max.PQ = c(1, 1), d = 1, D = 1, top = 3, return.best = F) {
 
   if (!is(data, "ts")) {
     warning("The argument 'data' must be a time series object!", immediate. = T)
@@ -73,6 +74,8 @@ sarima_model_selection <- function(data, max.pq = c(1, 1), max.PQ = c(1, 1), d =
   })
 
   # Return the best model, based on AIC
-  best <- unlist(results[3, AIC.top[1]])
-  arima(data, order = c(best[1], d, best[2]), seasonal = list(order = c(best[3], D, best[4]), period = season))
+  if(return.best){
+    best <- unlist(results[3, AIC.top[1]])
+    arima(data, order = c(best[1], d, best[2]), seasonal = list(order = c(best[3], D, best[4]), period = season))
+  }
 }

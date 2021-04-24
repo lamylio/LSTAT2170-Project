@@ -26,8 +26,7 @@ urlcolor:  "blue"
 
 links-as-notes: false
 # ---
-header-includes:
-  - \usepackage{blindtext}
+# header-includes:
 output:
   bookdown::pdf_document2:
     template: template/main.tex
@@ -36,7 +35,7 @@ output:
     fig_caption: yes
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, cache=FALSE}
 knitr::opts_chunk$set(
   cache = TRUE,
   echo = F,
@@ -44,6 +43,7 @@ knitr::opts_chunk$set(
 
   warning = F,
   message = F,
+  comment = NA,
 
   out.width = "80%",
   fig.align = "center",
@@ -53,6 +53,12 @@ knitr::opts_chunk$set(
   tidy.opts = list(width.cutoff = 65)
 )
 
+def_hook <- knitr::knit_hooks$get("output")
+knitr::knit_hooks$set(output = function(x, options) {
+  out <- def_hook(x, options)
+  out <- gsub(x = out, pattern = "```", replacement = "", fixed = T)
+  return(paste(out, collapse = "\n"))
+})
 # To display models in formula
 # library(equatiomatic)
 # equatiomatic::extract_eq(model, use_coefs = TRUE)
@@ -203,44 +209,73 @@ Now it's time to figure out which model would be the best fit to the data. To do
 
 In order to compare the effectiveness of the different models, we will primarily use the Akaike information criterion (AIC). However, since the AIC tends to overestimate the number of parameters needed, we will also use the Bayesian information criterion (BIC) as a secondary information.
 
-The results below describe the top 3 models found, from best to worst. First, we notice via the AICR[^2] that we get models with very close results. The winning model has an AIC of 1229, a BIC of 1241 and is composed of 4 parameters. The second one has a higher AIC of only 0.064 and a lower BIC of 2.447 (relative to the first one) but has only 3 parameters. The last model is somewhat less interesting since the increase in AICR is more important and it has as much parameters as the best one. 
+The results below describe the top 3 models found, from best to worst. First, we notice via the AICR[^2] that we get models with very close results. The winning model has an AIC of 1229, a BIC of 1241 and is composed of 4 parameters. The second one has a higher AIC of only 0.064 and a lower BIC of 2.447 (relative to the first one) but has only 3 parameters. The last model is somewhat less interesting since the increase in AIC is more important and it has as much parameters as the best one.
 
 [^2]: Akaike information criterion relative to the best model. 
 
+\begin{figure}[h]
+\centering
+\hspace{-3em}
+\begin{BVerbatim}
 ```{r model_selection, appendix=TRUE, comment=""}
 # Model comparison via AIC. (see sarima_model_selection.R)
-model.aic = sarima_model_selection(gas, max.pq = c(2,2), max.PQ = c(1,1), d = 1, D = 1, top=3)
+model.1 = sarima_model_selection(gas, max.pq = c(2,2), max.PQ = c(1,1), d = 1, D = 1, top=3, return.best = T)
 
 # Second best model (best bic)
-model.bic = arima(gas, order = c(1, 1, 1), seasonal = list(order = c(0, 1, 1), period = gas.freq))
+model.2 = arima(gas, order = c(1, 1, 1), seasonal = list(order = c(0, 1, 1), period = gas.freq))
+model.3 = arima(gas, order = c(2, 1, 1), seasonal = list(order = c(0, 1, 1), period = gas.freq))
 
 ```
+\end{BVerbatim}
+\end{figure}
+
+As an additional information, the log-likelihood of the models are respectively :
+
+-609.40, -610.43 and -610.05
 \pagebreak
-
-So we will continue with the two best models, namely: 
-
-S-ARIMA(1,1,1)$\times$(1,1,1)$_{12}$
-$$
-(1-\phi_1B)(1-\Phi_1B^{12})(1-B)^1(1-B^{12})^1\ Y_t = (1+\theta_1B)(1+\Theta_1B^{12})\ \epsilon_t
-$$
-
-with coefficients $\phi_1 = 0.446$, $\Phi_1 = -0.190$, $\theta_1 = -0.835$, and $\Theta_1 = -0.869$
-
-S-ARIMA(1,1,1)$\times$(0,1,1)$_{12}$
-$$
-(1-\phi_1B)(1-B)^1(1-B^{12})^1\ Y_t = (1+\theta_1B)(1+\Theta_1B^{12})\ \epsilon_t
-$$
-with coefficients, $\phi_1 = 0.453$, $\theta_1 = -0.832$, and $\Theta_1 = -1.000$
-
 
 # Models comparison and validation
 
-
-
+Now that we have a selection of models, we need to check if they are valid and correctly fitted. To do so, we will first perform an univariate and two-sided significance test (based on normal approximations) of the coefficients. Then, we will perform an analysis of the residuals by a Portmanteau test and finally an evaluation of the predictive capacity "on sample". 
 
 ## Coefficients
 
+In the same order as displayed in the previous section:
+
+\begin{figure}[h]
+\centering
+\hspace{-3em}
+\begin{BVerbatim}
+```{r significance_tests,appendix=TRUE, strip.white=TRUE}
+# Test the coefficients of each model
+significance.test(model.1, T)
+significance.test(model.2, T)
+significance.test(model.3, T)
+
+```
+\end{BVerbatim}
+\end{figure}
+
+Thanks to the indicators in parentheses, it is easy to see which coefficients are significant and to what degree. First, we notice that for the model with the lowest AIC (1), we cannot reject the hypothesis that the coefficient sar1 ($\Phi_1$) is statistically different from zero, even with an $\alpha = 0.10$. The same is observed for the third model with the coefficient ar2 ($\phi_2$).
+
+Those results lead us to choose the second model. This one being the most parsimonious, it only loses 0.064 points of AIC and in view of the significance test seems to be the most relevant. The latter can mathematically be written as :
+
+\begin{center}
+S-ARIMA(1,1,1)$\times$(0,1,1)$_{12}$\\
+$
+  (1-\phi_1B)(1-B)^1(1-B^{12})^1\ Y_t = (1+\theta_1B)(1+\Theta_1B^{12})\ \epsilon_t
+$
+\end{center}
+with coefficients, $\phi_1 = 0.453$, $\theta_1 = -0.832$, and $\Theta_1 = -1.000$.
+
 ## Portemanteau
+
+This time we will analyze the standardized residuals and test if they are different from white noise.
+
+```{r tsdiag, appendix=TRUE, fig.height=4.5}
+tsdiag(model.2, gof.lag=floor(sqrt(length(gas))))
+```
+
 
 ## Predictive power
 
@@ -269,7 +304,7 @@ plot(gas, main = "Gas deliveries in Florida", xaxp = gas.xaxp)
 
 \bigskip
 \begin{mdframed}[style=thicc, frametitle=Note, frametitlebackgroundcolor=black!30]
-  For reproducibility purposes, the complete R project containing the source code and the results is available on https://github.com/lamylio/LSTAT2170-Project.
+  For reproducibility purposes, the complete project containing the source code and the results is available on https://github.com/lamylio/LSTAT2170-Project.
   
   The below section is automatically generated and tidied. 
 \end{mdframed}

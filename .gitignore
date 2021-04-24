@@ -39,6 +39,7 @@ vignettes/*.pdf
 *.bcf
 *.aux
 *.out
+Project.md
 
 # R Environment Variables
 .Renviron
