@@ -1,6 +1,6 @@
 #' 
-#' @concept Comp.Sarima redesigned
 #' @author Lionel Lamy
+#' @concept Comp.Sarima redesigned
 #' 
 #' @description 
 #' Comparison using the AIC criterion of different S-ARIMA models
@@ -14,9 +14,7 @@
 #' @note
 #' Be careful not to set the maximum values too high.
 #' The data must be the original one, not differentiated.
-#' 
-#' @method sarima_model_selection(data, max.pq, max.PQ, d, D, percent.best)
-#' 
+#'  
 #' @param data the (univariate) time series. Must be class of ts().
 #' @param max.pq vector of length 2, maximum orders for p and q.
 #' @param max.PQ vector of length 2, maximum orders for P and Q.

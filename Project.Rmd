@@ -74,9 +74,10 @@ facilities <- new.env()
 source("./resources/scripts/fonctionsSeriesChrono.R", local = facilities)
 
 # Please check the github repository
-source("./resources/scripts/custom_plots.R", local = facilities)
 source("./resources/scripts/sarima_model_selection.R", local = facilities)
+source("./resources/scripts/ts_custom_plots.R", local = facilities)
 source("./resources/scripts/ts_significance_test.R", local = facilities)
+source("./resources/scripts/ts_on_sample_prediction.R", local = facilities)
 
 attach(facilities, name = "facilities")
 
@@ -88,9 +89,9 @@ gas <- read.table("./resources/data/gasflorida.txt", header = F)
 gas <- ts(gas, start = 1991, frequency = 12)
 
 # Define some useful variables
-gas.start <- attributes(gas)$tsp[1]
-gas.end <- attributes(gas)$tsp[2]
-gas.freq <- attributes(gas)$tsp[3]
+gas.start <- tsp(gas)[1]
+gas.end <- tsp(gas)[2]
+gas.freq <- tsp(gas)[3]
 gas.t <- seq(gas.start, to = gas.end, length = length(gas))
 gas.xaxp <- c(floor(gas.start), floor(gas.end), floor(gas.end - gas.start))
 
@@ -109,7 +110,7 @@ We will proceed to the beginning of this report with a first visual discovery of
 Considering our data to be an additive model $Y_t = T_t + S_t + \epsilon_t$, we can have a first insight by decomposing the series into trend ($T$), seasonal ($S$) and random ($\epsilon$) pieces. A plot containing the undecomposed data is available in the appendix. See \ref{figures}.
 
 ```{r plot_decompose, appendix=TRUE}
-# Plot the decomposition of the data (see custom_plot.R)
+# Plot the decomposition of the data (see ts_custom_plot.R)
 plot.decompose.ts(gas, main = "Decomposition of the deliveries of natural gas", cex.lab = .9, cex.axis = .95, xaxp = gas.xaxp)
 
 ```
@@ -122,7 +123,7 @@ Looking at the second line of the graph, we see that the data do not really seem
 Another interesting way to present the data is to display the evolution of the deliveries by stacking the years line by line. The outcome is fortunately the same. We notice a strong seasonality (since the lines all follow the same pattern) as well as a small decrease that seems to start from 1997 (colored dashed lines). Moreover, the lines seems to remain relatively close to each other and there is no drastic change in variance over time.
 
 ```{r plot_superposed, appendix=TRUE}
-# Plot the superposed view of the data (see custom_plot.R)
+# Plot the superposed view of the data (see ts_custom_plot.R)
 plot.superposed.ts(gas, title = "Superposed monthly deliveries of gas", xlab = "Month", ylab = "MMcf", dashed_thick_from = c(6, 8), xlim = c(0, 12))
 
 ```
@@ -231,12 +232,12 @@ model.3 = arima(gas, order = c(2, 1, 1), seasonal = list(order = c(0, 1, 1), per
 
 As an additional information, the log-likelihood of the models are respectively :
 
--609.40, -610.43 and -610.05
+`r logLik(model.1)`, `r logLik(model.2)` and `r logLik(model.3)`.
 \pagebreak
 
 # Models comparison and validation
 
-Now that we have a selection of models, we need to check if they are valid and correctly fitted. To do so, we will first perform an univariate and two-sided significance test (based on normal approximations) of the coefficients. Then, we will perform an analysis of the residuals by a Portmanteau test and finally an evaluation of the predictive capacity "on sample". 
+Now that we have a selection of models, we need to check if they are valid and correctly fitted. To do so, we will first perform an univariate and two-sided significance test (based on normal approximations) of the coefficients. Then, we will perform an evaluation of the predictive ability "on sample" and finally, after the choice of the final model, we will do an analysis of the residuals by a Portmanteau (Ljung-box) test. 
 
 ## Coefficients
 
@@ -247,7 +248,7 @@ In the same order as displayed in the previous section:
 \hspace{-3em}
 \begin{BVerbatim}
 ```{r significance_tests,appendix=TRUE, strip.white=TRUE}
-# Test the coefficients of each model
+# Test the coefficients of each model (see ts_significance_test.R)
 significance.test(model.1, T)
 significance.test(model.2, T)
 significance.test(model.3, T)
@@ -256,9 +257,50 @@ significance.test(model.3, T)
 \end{BVerbatim}
 \end{figure}
 
-Thanks to the indicators in parentheses, it is easy to see which coefficients are significant and to what degree. First, we notice that for the model with the lowest AIC (1), we cannot reject the hypothesis that the coefficient sar1 ($\Phi_1$) is statistically different from zero, even with an $\alpha = 0.10$. The same is observed for the third model with the coefficient ar2 ($\phi_2$).
+Thanks to the indicators in parentheses, it is easy to see which coefficients are significant and to what degree. First, we notice that for the model with the lowest AIC (1), we cannot reject the hypothesis that the coefficient sar1 ($\Phi_1$) is statistically different from zero, even with an $\alpha = 0.10$. The same is observed for the third model with ar2 ($\phi_2$).
 
-Those results lead us to choose the second model. This one being the most parsimonious, it only loses 0.064 points of AIC and in view of the significance test seems to be the most relevant. The latter can mathematically be written as :
+## Predictive power
+
+Let us now continue with a comparison of the predictive power of each model. To do this, we will build models based on the first 80% of data, predict a step ahead and repeat the operation by integrating an additional data into the model until we reach the end of the time series. We thus obtain predictions on the last 20% of data, which we can compare with the real data and also calculate the MSE of the models.
+
+\vspace{1em}
+
+```{r on_sample_prediction, appendix=TRUE}
+# MSE and predictions for the last 20% (see ts_on_sample_prediction.R) 
+model.1.osp = on.sample.prediction(gas, order = c(1, 1, 1), seasonal = list(order = c(1, 1, 1), period = gas.freq))
+model.2.osp = on.sample.prediction(gas, order = c(1, 1, 1), seasonal = list(order = c(0, 1, 1), period = gas.freq))
+model.3.osp = on.sample.prediction(gas, order = c(2, 1, 1), seasonal = list(order = c(0, 1, 1), period = gas.freq))
+
+```
+```{r plot_on_sample_predictions, appendix=TRUE, fig.height=3.8}
+
+# Adapt the predictions to the plot of the time series
+models.osp.ts = function(values) ts(values, end=gas.end, frequency = gas.freq)
+
+par(mar=c(4,4,1.5,4))
+# Plot the predictions
+plot(models.osp.ts(tail(gas, 24)), lwd=2, main="On sample predictions", ylab="MMcf", xlab="Year", 
+     ylim=c(min(tail(gas, 24))-100, max(tail(gas, 24))+300))
+lines(models.osp.ts(model.1.osp$pred), col=rgb(1,0,0,.7), lwd=2)
+lines(models.osp.ts(model.2.osp$pred), col=rgb(0,1,0,.7), lwd=2)
+lines(models.osp.ts(model.3.osp$pred), col=rgb(0,0,1,.7), lwd=2)
+legend("topright", legend=c("Original data","(1,1,1)x(1,1,1)[12]", "(1,1,1)x(0,1,1)[12]", "(2,1,1)x(0,1,1)[12]"), col=1:4, lty=1, lwd=2, cex=.6)
+
+```
+\pagebreak
+
+We observe that globally, although not perfect, the models manage to follow the trend, but that models 2 (green) and 3 (blue) seem to perform slightly better than the first one (red), and in fact, their MSE are lower with respectively 30142 and 29607, what corresponds to a decrease of more than 8% compared to 32830.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}ccc@{}}
+\toprule
+\textbf{Model 1} & \textbf{Model 2} & \textbf{Model 3} \\ \midrule
+32 830           & 30 142           & 29 607           \\ \bottomrule
+\end{tabular}
+\end{table}
+
+Those results lead us to choose the second model. This one being the most parsimonious, it only loses 0.064 points of AIC, has only 1.8% more MSE than the third model and in view of the significance test seems to be the most relevant. The latter can mathematically be written as :
 
 \begin{center}
 S-ARIMA(1,1,1)$\times$(0,1,1)$_{12}$\\
@@ -272,12 +314,15 @@ with coefficients, $\phi_1 = 0.453$, $\theta_1 = -0.832$, and $\Theta_1 = -1.000
 
 This time we will analyze the standardized residuals and test if they are different from white noise.
 
+$( H_0: \rho_{\epsilon}(1)=...= \rho_{\epsilon}(K) = 0 )$
+
 ```{r tsdiag, appendix=TRUE, fig.height=4.5}
 tsdiag(model.2, gof.lag=floor(sqrt(length(gas))))
 ```
 
+## Choice
 
-## Predictive power
+
 
 # Predictions
 

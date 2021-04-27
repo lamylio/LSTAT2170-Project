@@ -1,4 +1,5 @@
 significance.test <- function(model, signif = F) {
+  
   if (is(model, "ar")) {
     coeff.vect <- model$ar
     var.vect <- diag(model$asy.var.coef)
@@ -7,8 +8,7 @@ significance.test <- function(model, signif = F) {
     var.vect <- diag(model$var.coef)[1:length(model$coef)]
   } else {
     warning(paste0(
-      "Model must be of class AR or ARIMA but is ",
-      toupper(class(model)), " !"
+      "Model must be of class AR or ARIMA but is ", toupper(class(model)), " !"
     ), immediate. = T)
     return(NA)
   }

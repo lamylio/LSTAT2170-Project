@@ -79,8 +79,7 @@ plot.acf.pacf = function(time.serie, lag.max = 50, simplify=T, linked_by_line=T,
   if(linked_by_line){lines(ts.pacf$lag, ts.pacf$acf, type="b", col=rgb(0,0,0,.7))}
 }
 
-# =======================================
-
+# ---------------------------------------
 plot.n.ahead.predictions <- function(time.serie, model, n = 10, before = 48, holtwinters=F) {
   len <- length(time.serie)
   
