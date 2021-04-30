@@ -19,7 +19,7 @@ plot.variance.ts <- function(time.serie, title = "", std = T, ...) {
   ts.start <- ts.attr[1]
   ts.end <- ts.attr[2]
   ts.freq <- ts.attr[3]
-
+  
   variances <- sapply(seq(from = 1, to = abs(ts.end - ts.start)), function(i) var(time.serie[ts.freq * (i - 1) + (1:ts.freq)]))
   if (std) {
     variances <- sqrt(variances)
@@ -36,18 +36,18 @@ plot.superposed.ts <- function(time.serie, title = "Superposed", dashed_thick_fr
   ts.start <- ts.attr[1]
   ts.end <- ts.attr[2]
   ts.freq <- ts.attr[3]
-
+  
   colors <- rainbow(abs(ts.end - ts.start))
-
+  
   plot(time.serie[1:ts.freq],
-    type = "l", main = title,
-    ylim = c(min(time.serie), max(time.serie)), ...
+       type = "l", main = title,
+       ylim = c(min(time.serie), max(time.serie)), ...
   )
-
+  
   for (i in 2:abs(ts.end - ts.start)) {
     lines(time.serie[ts.freq * (i - 1) + (1:ts.freq)], col = colors[i - 1], lty = ifelse(i > dashed_thick_from[1], 2, 1), lwd = ifelse(i > dashed_thick_from[2], 2, 1))
   }
-
+  
   legend("topleft", legend = ts.start:(ts.end-1), lty = c(rep(1, dashed_thick_from[1]), rep(2, abs(ts.end - ts.start) - dashed_thick_from[1])), col = c(1, colors), cex = 0.5, bg = "white")
 }
 
@@ -79,10 +79,16 @@ plot.acf.pacf = function(time.serie, lag.max = 50, simplify=T, linked_by_line=T,
   if(linked_by_line){lines(ts.pacf$lag, ts.pacf$acf, type="b", col=rgb(0,0,0,.7))}
 }
 
-# ---------------------------------------
+
+plot.ljungbox = function(model, lag.max = 10, df=0){
+  values = sapply(1:lag.max, function(i) Box.test(resid(model), type="Ljung-Box", lag=i, fitdf = df)$p.value)
+  plot(values, ylim=c(0,1), xlab="lag", ylab="p-values", type="b", main="Ljung-Box test of residuals")
+  abline(h=0.05, col="blue", lty="dashed")
+}
+
+# =======================================
+
 plot.n.ahead.predictions <- function(time.serie, model, n = 10, before = 48, holtwinters=F) {
-  len <- length(time.serie)
-  
   if (holtwinters){
     fore = predict(HoltWinters(time.serie, beta = FALSE), n.ahead = n, type="response", prediction.interval=T, level=0.95)
   }else{
@@ -92,11 +98,9 @@ plot.n.ahead.predictions <- function(time.serie, model, n = 10, before = 48, hol
   before = min(before, length(time.serie))
   ts.freq = frequency(time.serie)
   
-  draw = ts(c(tail(time.serie, before), ifelse(isTRUE(holtwinters), fore[1,1], fore$pred[1])), start=end(time.serie)[1]-(before/ts.freq)+1, frequency = ts.freq) 
-  
+  draw = ts(c(tail(time.serie, before), ifelse(isTRUE(holtwinters), fore[1,1], fore$pred[1])), end=end(time.serie)+(1/ts.freq), frequency=ts.freq)
   plot(draw, type="l", main=paste0("Time serie and prediction (", n, "-ahead)", ifelse(holtwinters, "\nHolt-winter's method", "")), ylim=c(min(draw)-0.1*min(draw), max(draw)+0.1*max(draw)),
-       xlab = "Time", ylab = "Y", xlim=c(start(draw)[1], end(time.serie)[1]+ceiling(n/ts.freq)+0.1*(n/ts.freq)))
-  
+       xlab = "Time", ylab = "Y", xlim=c(start(draw)[1], end(time.serie)[1]+(end(time.serie)[2]/ts.freq)+round(n/ts.freq)))
   
   if(holtwinters){
     lines(fore[, "fit"], col=2)
@@ -108,7 +112,7 @@ plot.n.ahead.predictions <- function(time.serie, model, n = 10, before = 48, hol
     lines(fore$pred - 1.96*fore$se, lty="dashed", col=4)
   }
   
-  legend("topleft", legend = c("Observations", "Prediction", "95% Confidence"), col = c(1, 2, 4), lty = c(1, 1, 2), cex = .8, lwd = 2)
+  legend("topleft", legend = c("Observations", "Prediction", "95% Confidence"), col = c(1, 2, 4), lty = c(1, 1, 2), cex = .7, lwd = 2)
 }
 
 # ---------------------------------------

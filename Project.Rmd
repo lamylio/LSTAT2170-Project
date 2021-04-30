@@ -139,9 +139,9 @@ For this purpose, we will use the method of (iterated) differences. Considering 
 Note that the resulting time series is therefore shifted by $k$ periods. 
 
 ```{r, deseasonalize_detrend, appendix=TRUE}
-# Remove the seasonality using lag 12 as we have monthly data
-gas.1 <- diff(gas, lag=1, differences = 1)
 # Remove global trend
+gas.1 <- diff(gas, lag=1, differences = 1)
+# Remove the seasonality using lag 12 as we have monthly data
 gas.2 <- diff(gas.1, lag = 12, differences = 1)
 
 ```
@@ -310,21 +310,29 @@ $
 \end{center}
 with coefficients, $\phi_1 = 0.453$, $\theta_1 = -0.832$, and $\Theta_1 = -1.000$.
 
-## Portemanteau
+## Ljung-Box
 
-This time we will analyze the standardized residuals and test if they are different from white noise.
-
-$( H_0: \rho_{\epsilon}(1)=...= \rho_{\epsilon}(K) = 0 )$
+As a last test, we will check the autocorrelation of the residuals of the model via a portmanteau test, more specifically Ljung-box. We test the null hypothesis that the residuals are not different from white noise, up to lag $K = \sqrt{T}$ where $T$ is the length of our data. 
+$$H_0: \rho_{\epsilon}(1)=...= \rho_{\epsilon}(K) = 0$$
+$$H_1: \rho_{\epsilon}(1)=...= \rho_{\epsilon}(K) \ne 0$$
 
 ```{r tsdiag, appendix=TRUE, fig.height=4.5}
-tsdiag(model.2, gof.lag=floor(sqrt(length(gas))))
+plot.ljungbox(model.2, floor(sqrt(length(gas))))
+
 ```
 
-## Choice
+As the p-values are all well above the threshold, we cannot reject the null hypothesis. This is convenient for us because it means that there is no correlation in the residuals.
 
-
+A complete figure including the ACF of the residuals is available in appendix.
 
 # Predictions
+
+```{r, appendix=TRUE, fig.show="hold", out.width="49%", fig.width=5.5}
+plot.n.ahead.predictions(gas, model.2, n=gas.freq, before=2*gas.freq)
+plot.n.ahead.predictions(gas, model.2, n=gas.freq, before=2*gas.freq, holtwinters = T)
+
+```
+
 
 # Conclusion
 
@@ -343,6 +351,9 @@ tsdiag(model.2, gof.lag=floor(sqrt(length(gas))))
 
 # Plot the complete dataset non decomposed
 plot(gas, main = "Gas deliveries in Florida", xaxp = gas.xaxp)
+
+# Ljung-Box test
+tsdiag(model.2, gof.lag=floor(sqrt(length(gas))))
 ```
 
 ## Code

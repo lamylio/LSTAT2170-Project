@@ -79,6 +79,13 @@ plot.acf.pacf = function(time.serie, lag.max = 50, simplify=T, linked_by_line=T,
   if(linked_by_line){lines(ts.pacf$lag, ts.pacf$acf, type="b", col=rgb(0,0,0,.7))}
 }
 
+
+plot.ljungbox = function(model, lag.max = 10){
+  values = sapply(1:lag.max, function(i) Box.test(resid(model), type="Ljung-Box", lag=i)$p.value)
+  plot(values, ylim=c(0,1), xlab="lag", ylab="p-values", type="b", main="Ljung-Box test of residuals")
+  abline(h=0.05, col="blue", lty="dashed")
+}
+
 # =======================================
 
 plot.n.ahead.predictions <- function(time.serie, model, n = 10, before = 48, holtwinters=F) {
