@@ -80,9 +80,9 @@ plot.acf.pacf = function(time.serie, lag.max = 50, simplify=T, linked_by_line=T,
 }
 
 
-plot.ljungbox = function(model, lag.max = 10, df=0){
-  values = sapply(1:lag.max, function(i) Box.test(resid(model), type="Ljung-Box", lag=i, fitdf = df)$p.value)
-  plot(values, ylim=c(0,1), xlab="lag", ylab="p-values", type="b", main="Ljung-Box test of residuals")
+plot.ljungbox = function(residuals, lag.max = 10, df=0, title="Ljung-Box test of residuals"){
+  values = sapply(1:lag.max, function(i) Box.test(residuals, type="Ljung-Box", lag=i, fitdf = df)$p.value)
+  plot(values, ylim=c(0,1), xlab="lag", ylab="p-values", type="b", main=title)
   abline(h=0.05, col="blue", lty="dashed")
 }
 
@@ -98,9 +98,13 @@ plot.n.ahead.predictions <- function(time.serie, model, n = 10, before = 48, hol
   before = min(before, length(time.serie))
   ts.freq = frequency(time.serie)
   
-  draw = ts(c(tail(time.serie, before), ifelse(isTRUE(holtwinters), fore[1,1], fore$pred[1])), end=end(time.serie)+(1/ts.freq), frequency=ts.freq)
-  plot(draw, type="l", main=paste0("Time serie and prediction (", n, "-ahead)", ifelse(holtwinters, "\nHolt-winter's method", "")), ylim=c(min(draw)-0.1*min(draw), max(draw)+0.1*max(draw)),
-       xlab = "Time", ylab = "Y", xlim=c(start(draw)[1], end(time.serie)[1]+(end(time.serie)[2]/ts.freq)+round(n/ts.freq)))
+  original = ts(tail(time.serie, before), end=end(time.serie), frequency=ts.freq)
+  link = ts(c(tail(time.serie, 1), ifelse(isTRUE(holtwinters), fore[1,1], fore$pred[1])), start=end(time.serie), frequency=ts.freq)
+  
+  plot(original, type="l", main=paste0("Time serie and prediction (", n, "-ahead)", ifelse(holtwinters, "\nHolt-winter's method", "")), 
+       ylim=c(min(original)-0.1*min(original), max(original)+0.1*max(original)), ylab = "Y", 
+       xlim=c(start(original)[1], end(time.serie)[1]+(end(time.serie)[2]/ts.freq)+round(n/ts.freq)), xlab = "Time")
+  lines(link, col=2)
   
   if(holtwinters){
     lines(fore[, "fit"], col=2)
@@ -113,16 +117,4 @@ plot.n.ahead.predictions <- function(time.serie, model, n = 10, before = 48, hol
   }
   
   legend("topleft", legend = c("Observations", "Prediction", "95% Confidence"), col = c(1, 2, 4), lty = c(1, 1, 2), cex = .7, lwd = 2)
-}
-
-# ---------------------------------------
-plot.last.n.predictions <- function(time.serie, order, seasonal=list(order = c(0L, 0L, 0L), period=NA), n = 10, main="Last n predictions") {
-  ts.ahead <- OneAhead(time.serie, order, seasonal)
-  
-  len <- length(time.serie)
-  n <- min(n, 0.8 * len)
-  
-  plot(time.serie[I(len - n):len], type = "l", main = main, ylab = "Y", xlab = "Time", lwd = 1)
-  lines(ts(ts.ahead$tspred[I(len - n):len], start = 0, end = n), col = 2, lty = 2, lwd = 1)
-  legend("topleft", legend = c("Observations", "Simulated"), col = c(1, 2), lty = c(1, 2), cex = .8, lwd = 2)
 }

@@ -4,12 +4,6 @@
 title: "LSTAT2170 - Time series"
 subtitle: "Final Project"
 
-# ---
-# You can remove settings below
-# Defaults values are defined
-
-# logo: ""
-
 institute: "Université catholique de Louvain"
 faculty: "Louvain School of Statistics"
 department: ""
@@ -18,11 +12,16 @@ context: ""
 date: \today
 
 # ---
-colorlinks: yes
+colorlinks: false
+bordercolorlinks: true
 
 linkcolor: "black"
 citecolor: "blue"
 urlcolor:  "blue"
+
+linkbordercolor: "black"
+urlbordercolor: "blue"
+citebordercolor: "blue"
 
 links-as-notes: false
 # ---
@@ -50,7 +49,9 @@ knitr::opts_chunk$set(
   fig.path = "resources/figs/",
 
   tidy = TRUE,
-  tidy.opts = list(width.cutoff = 65)
+  tidy.opts = list(width.cutoff = 65),
+  
+  digits=3
 )
 
 def_hook <- knitr::knit_hooks$get("output")
@@ -107,7 +108,7 @@ We will proceed to the beginning of this report with a first visual discovery of
 
 # Data discovery
 
-Considering our data to be an additive model $Y_t = T_t + S_t + \epsilon_t$, we can have a first insight by decomposing the series into trend ($T$), seasonal ($S$) and random ($\epsilon$) pieces. A plot containing the undecomposed data is available in the appendix. See \ref{figures}.
+Considering our data to be an additive model $Y_t = T_t + S_t + \epsilon_t$, we can have a first insight by decomposing the series into trend ($T$), seasonal ($S$) and random ($\epsilon$) pieces. A plot containing the undecomposed data is available in the [appendix](#F1).
 
 ```{r plot_decompose, appendix=TRUE}
 # Plot the decomposition of the data (see ts_custom_plot.R)
@@ -316,14 +317,13 @@ As a last test, we will check the autocorrelation of the residuals of the model 
 $$H_0: \rho_{\epsilon}(1)=...= \rho_{\epsilon}(K) = 0$$
 $$H_1: \rho_{\epsilon}(1)=...= \rho_{\epsilon}(K) \ne 0$$
 
-```{r tsdiag, appendix=TRUE, fig.height=4.5}
-plot.ljungbox(model.2, floor(sqrt(length(gas))))
+```{r plot_ljungbox, appendix=TRUE, fig.height=4.5}
+# Box.test of the residuals
+plot.ljungbox(resid(model.2), floor(sqrt(length(gas))))
 
 ```
 
-As the p-values are all well above the threshold, we cannot reject the null hypothesis. This is convenient for us because it means that there is no correlation in the residuals.
-
-A complete figure including the ACF of the residuals is available in appendix.
+As the p-values are all well above the threshold, we cannot reject the null hypothesis. This is convenient for us because it means that there is no correlation in the residuals. We also tested the residuals squared and the [result](#F3) is similar. A more complete diagnostic which includes the ACF of the residuals is available in the [appendix](#F2).
 
 # Predictions
 
@@ -332,7 +332,6 @@ plot.n.ahead.predictions(gas, model.2, n=gas.freq, before=2*gas.freq)
 plot.n.ahead.predictions(gas, model.2, n=gas.freq, before=2*gas.freq, holtwinters = T)
 
 ```
-
 
 # Conclusion
 
@@ -343,18 +342,36 @@ plot.n.ahead.predictions(gas, model.2, n=gas.freq, before=2*gas.freq, holtwinter
 
 # Appendix
 
+```{r, appendix=TRUE}
+# ============================================
+```
+
 ## Figures
 
-```{r plot_gas, appendix=TRUE}
-#======== #
-#'Appendix #
-
+### Plot of the data{#F1}
+```{r, appendix=TRUE}
 # Plot the complete dataset non decomposed
-plot(gas, main = "Gas deliveries in Florida", xaxp = gas.xaxp)
+plot(gas, main = "Gas deliveries in Florida", xaxp = gas.xaxp, ylab="MMcf")
 
-# Ljung-Box test
-tsdiag(model.2, gof.lag=floor(sqrt(length(gas))))
 ```
+
+### TSDiag (Portemanteau test){#F2}
+
+```{r, appendix=TRUE, fig.height=5.5}
+# TSDiag : Ljung-Box test with ACF
+tsdiag(model.2, gof.lag=floor(sqrt(length(gas))))
+
+```
+
+### Ljung-Box test of the squared residuals{#F3}
+
+```{r, appendix=TRUE}
+# Ljung-Box test of the squared residuals
+plot.ljungbox(resid(model.2)**2, floor(sqrt(length(gas))), title="Ljung-Box of the squared residuals")
+
+```
+
+\pagebreak
 
 ## Code
 
