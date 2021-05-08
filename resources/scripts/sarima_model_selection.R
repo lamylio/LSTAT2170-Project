@@ -25,7 +25,7 @@
 #' 
 #' @return the model with the lowest AIC.
 
-sarima_model_selection <- function(data, max.pq = c(1, 1), max.PQ = c(1, 1), d = 1, D = 1, top = 3, return.best = F) {
+sarima.model.selection <- function(data, max.pq = c(1, 1), max.PQ = c(1, 1), d = 1, D = 1, top = 3, return.best = F) {
 
   if (!is(data, "ts")) {
     warning("The argument 'data' must be a time series object!", immediate. = T)

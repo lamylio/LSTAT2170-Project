@@ -88,9 +88,9 @@ plot.ljungbox = function(residuals, lag.max = 10, df=0, title="Ljung-Box test of
 
 # =======================================
 
-plot.n.ahead.predictions <- function(time.serie, model, n = 10, before = 48, holtwinters=F) {
+plot.n.ahead.predictions <- function(time.serie, model, n = 10, before = 48, holtwinters=F, HW.alpha=NULL, HW.beta=NULL, HW.gamma=NULL) {
   if (holtwinters){
-    fore = predict(HoltWinters(time.serie, beta = FALSE), n.ahead = n, type="response", prediction.interval=T, level=0.95)
+    fore = predict(HoltWinters(time.serie, alpha=HW.alpha, beta = HW.beta, gamma = HW.gamma), n.ahead = n, type="response", prediction.interval=T, level=0.95)
   }else{
     fore <- predict(model, n.ahead = n, type="response")
   }
@@ -117,4 +117,5 @@ plot.n.ahead.predictions <- function(time.serie, model, n = 10, before = 48, hol
   }
   
   legend("topleft", legend = c("Observations", "Prediction", "95% Confidence"), col = c(1, 2, 4), lty = c(1, 1, 2), cex = .7, lwd = 2)
+  return(fore)
 }

@@ -65,5 +65,5 @@ on.sample.prediction <- function(data, order, seasonal = list(order = c(0, 0, 0)
   # Retrieve the 1st prediction of each predict()
   pred <- sapply(predictions, "[[", 1)
 
-  return(list(pred = pred, se = errors, mse = mean(errors)))
+  return(list(pred = pred, se = errors, mse = mean(errors))) # OneAhead divide the errors by n-1
 }
