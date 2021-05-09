@@ -325,9 +325,9 @@ As the p-values are all well above the threshold, one cannot reject the null hyp
 
 # Predictions
 
-[TODO]
+[TODO : Introduce the section and the exponential smoothing]
 
-Exponential smoothing methods produce forecasts where recent observations have a more exponentially greater weight than past ones. In other words, the more recent the observation, the higher the associated weight. Moreover, they can be used in a wide range of time series without any particular conditions. Therefore, it would be interesting to compare one of these methods before concluding with a SARIMA model. However, as the data contains both trend and seasonal components, the Holt (1957) and Winters (1960) method will be used. The component form, for an additive model is, with $p$ the seasonality:
+Exponential smoothing methods produce forecasts where recent observations have an exponentially greater weight than past ones. In other words, the more recent the observation, the higher the associated weight. Moreover, they can be used in a wide range of time series without any particular conditions. Therefore, it would be interesting to compare one of these methods before concluding with a SARIMA model. In this case, as the data contains both trend and seasonal components, the Holt (1957) and Winters (1960) method will be used. For an additive model, with $p$ the seasonality:
 
 $$
 \widehat{Y}_{t+k} = a_t + kb_t + s_{[t-p+1+(k-1)\ \text{mod}\ p]}
@@ -351,7 +351,10 @@ and correspond to respectively the level, the trend and the seasonal component w
 \end{tabular}
 \end{table}
 
-[TODO]
+[TODO :
+- Introduce the plots
+- Explain how confidence interval are constructed
+]
 
 ```{r plot_predictions_side_by_side, appendix=TRUE, fig.show="hold", out.width="49%", fig.width=5.5}
 # Predictions with model 2 and Holt-winters, zoomed
