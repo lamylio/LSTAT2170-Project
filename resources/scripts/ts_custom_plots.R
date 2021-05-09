@@ -88,7 +88,7 @@ plot.ljungbox = function(residuals, lag.max = 10, df=0, title="Ljung-Box test of
 
 # =======================================
 
-plot.n.ahead.predictions <- function(time.serie, model, n = 10, before = 48, holtwinters=F, HW.alpha=NULL, HW.beta=NULL, HW.gamma=NULL) {
+plot.n.ahead.predictions <- function(time.serie, model, n = 10, before = 48, holtwinters=F, HW.alpha=NULL, HW.beta=NULL, HW.gamma=NULL, ...) {
   if (holtwinters){
     fore = predict(HoltWinters(time.serie, alpha=HW.alpha, beta = HW.beta, gamma = HW.gamma), n.ahead = n, type="response", prediction.interval=T, level=0.95)
   }else{
@@ -102,8 +102,8 @@ plot.n.ahead.predictions <- function(time.serie, model, n = 10, before = 48, hol
   link = ts(c(tail(time.serie, 1), ifelse(isTRUE(holtwinters), fore[1,1], fore$pred[1])), start=end(time.serie), frequency=ts.freq)
   
   plot(original, type="l", main=paste0("Time serie and prediction (", n, "-ahead)", ifelse(holtwinters, "\nHolt-winter's method", "")), 
-       ylim=c(min(original)-0.1*min(original), max(original)+0.1*max(original)), ylab = "Y", 
-       xlim=c(start(original)[1], end(time.serie)[1]+(end(time.serie)[2]/ts.freq)+round(n/ts.freq)), xlab = "Time")
+       ylim=c(min(original)-0.1*min(original), max(original)+0.1*max(original)), 
+       xlim=c(start(original)[1], end(time.serie)[1]+(end(time.serie)[2]/ts.freq)+round(n/ts.freq)), ...)
   lines(link, col=2)
   
   if(holtwinters){

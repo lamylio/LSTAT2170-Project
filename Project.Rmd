@@ -8,11 +8,11 @@ institute: "Université catholique de Louvain"
 faculty: "Louvain School of Statistics"
 department: ""
 
-context: ""
+context: "Florida Natural Gas Deliveries Analysis"
 date: \today
 
 authors:
-  - "Lionel LAMY"
+  - "Lionel Lamy"
   - "1294-1700"
 
 # ---
@@ -103,11 +103,11 @@ In this project one will focus on the analysis of real data. These data are the 
 
 [^1]: \quad"Mcf" means 1,000 cubic feet of natural gas; "MMcf" means 1,000 Mcf.
 
-we will proceed to the beginning of this report with a first visual discovery of the dataset. Then, we will eventually apply a series of transformations to stabilize the variance, remove possible trends and seasonality. Next, we will analyze the autocorrelation and partial autocorrelation functions in order to have a first intuition on the type of model to fit. Following this, we will establish which model would be the most appropriate for our data and verify the insight of our choice by several methods such as a significance test of the coefficients, an analysis of the residuals by a Ljung-Box test or the evaluation of the predictive capacity "on sample". The final objective is to be able to give a prediction interval for future values over roughly one year.
+The beginning of this report will start with a first visual discovery of the dataset. Then, a set of transformations will be applied to stabilize the variance, remove possible trends and seasonality. Next, one will analyze the autocorrelation and partial autocorrelation functions in order to have a first intuition on the type of model to fit. Following this, several methods such as a significance test of the coefficients, an analysis of the residuals by a Ljung-Box test or the evaluation of the predictive capacity "on sample" will allow to establish which model would be the most appropriate for the data. The final objective is to be able to give a prediction interval for future values over roughly one year.
 
 # Data discovery
 
-Considering our data to be an additive model $Y_t = T_t + S_t + \epsilon_t$, we can have a first insight by decomposing the series into trend ($T$), seasonal ($S$) and random ($\epsilon$) pieces. A plot containing the undecomposed data is available in the [appendix](#F1).
+Considering the data to be an additive model $Y_t = T_t + S_t + \epsilon_t$, one can have a first insight by decomposing the series into trend ($T$), seasonal ($S$) and random ($\epsilon$) pieces. A plot containing the undecomposed data is available in the [appendix](#F1).
 
 ```{r plot_decompose, appendix=TRUE}
 # Plot the decomposition of the data (see ts_custom_plot.R)
@@ -116,9 +116,9 @@ plot.decompose.ts(gas, main = "Decomposition of the deliveries of natural gas", 
 ```
 \vspace{-.5em}
 
-The first obvious observation we can make by looking at just the first line is that we are dealing with seasonal data. Indeed, we can see in the third row an almost perfect seasonality with maximum values at the beginning of each year and minimum values towards the middle.  These results are hardly surprising given the nature of the data. Indeed, it seems normal that a greater quantity of gas is used during winter and that gas consumption decreases during summer. Looking at the second line of the graph, we see that the data do not really seem to vary except in 1996-1997 when a decrease is noticeable. A closer look at the first line shows this phenomenon. 
+The first obvious observation one can make by looking at just the first line is one is dealing with seasonal data. Indeed, the third row shows an almost perfect seasonality with maximum values at the beginning of each year and minimum values towards the middle.  These results are hardly surprising given the nature of the data. Indeed, it seems normal that a greater quantity of gas is used during winter and that gas consumption decreases during summer. Looking at the second line of the graph, one see that the data do not really seem to vary except in 1996-1997 when a decrease is noticeable. A closer look at the first line shows this phenomenon. 
 
-Another interesting way to present the data is to display the evolution of the deliveries by stacking the years line by line. The outcome is fortunately the same. We notice a strong seasonality (since the lines all follow the same pattern) as well as a small decrease that seems to start from 1997 (colored dashed lines). Moreover, the lines seems to remain relatively close to each other and there is no drastic change in variance over time.
+Another interesting way to present the data is to display the evolution of the deliveries by stacking the years line by line. The outcome is fortunately the same. One notice a strong seasonality (since the lines all follow the same pattern) as well as a small decrease that seems to start from 1997 (colored dashed lines). Moreover, the lines seems to remain relatively close to each other and there is no drastic change in variance over time.
 
 ```{r plot_superposed, appendix=TRUE}
 # Plot the superposed view of the data (see ts_custom_plot.R)
@@ -128,11 +128,11 @@ plot.superposed.ts(gas, title = "Superposed monthly deliveries of gas", xlab = "
 
 # Box-Jenkins
 
-The previous statements make us decide not to apply a logarithmic transformation on the data. On the other hand, as we aim to examine the correlation structure of the residuals, we need to achieve stationarity. Meaning that it is necessary to deseasonalize and delinearize the data in order to go further with the visual analysis.
+The previous observations do not require stabilizing the variance by any transformation of the data. On the other hand, as one aim to examine the correlation structure of the residuals, (weak) stationarity need to achieved. Meaning that it is necessary to deseasonalize and delinearize the data in order to go further with the visual analysis.
 
 ## Deseasonalize and detrend
 
-For this purpose, we will use the method of (iterated) differences. Considering that $Y_t$ is the time series at period $t$, then the first difference at lag $k$ is $\bigtriangledown_k\ Y_t := Y_t - Y_{t-k}$. As a first step, we apply the latter on the data at lag 1 to remove the linear trend. Next, we repeat this process at a lag equal to the periodicity. That is, we use the value 12 since the data are collected monthly and that the seasonality is annual.
+For this purpose, the method of (iterated) differences will be used. Considering that $Y_t$ is the time series at period $t$, then the first difference at lag $k$ is $\bigtriangledown_k\ Y_t := Y_t - Y_{t-k}$. As a first step, the latter operation is applied on the data at lag 1 to remove the linear trend. This process is next repeated at a lag equal to the periodicity, ie. the value 12 since the data is collected monthly and the seasonality is annual.
 
 The resulting time series is therefore shifted by $k = 13$ periods. 
 
@@ -147,17 +147,17 @@ gas.2 <- diff(gas.1, lag = 12, differences = 1)
 ```{r, fig.height=4.5, appendix=TRUE}
 # Removed trend
 plot(gas.1, main = "Detrended time series", sub="First difference at lag k=1", xaxp = gas.xaxp)
-abline(reg = lm(gas.1 ~ tail(gas.t, -1)), col = "red", lty = 1)
+abline(reg = lm(gas.1 ~ tail(gas.t, -1)), col = "red", lty = 1, xlab="Year", ylab="Y")
 abline(h=0, col = rgb(0, 0, 1, .7), lty = 2)
 legend("topright", legend = c("Linear trend", "Horizontal line"), col = c("red","blue"), cex = .8, lty = c(1,2))
 
 ```
 
-We observe in the figure above that once the data are differentiated, the linear trend is much less pronounced but we still have a visible periodicity. This particularity seems to be corrected on the second graph below as we now have a time series that appears to be random. Although we notice by plotting a linear regression (in red) that the trend is not quite equal to zero, the slope is flat enough for us to consider the time series to be (weakly) stationary.
+One observe in the figure above that once the data is differentiated, the linear trend is much less pronounced but there still is a visible periodicity. This particularity seems to be corrected on the second graph below as the time series now appears to be random. Even if by plotting a linear regression (in red) one can see that the trend is not quite equal to zero, the slope is flat enough to consider the time series to be (weakly) stationary.
 
 ```{r, fig.height=4.5, appendix=TRUE}
 # Removed trend and seasonality
-plot(gas.2, main = "Detrended and deseasonalized time series", xaxp = gas.xaxp, sub="First difference at lag k=12")
+plot(gas.2, main = "Detrended and deseasonalized time series", xaxp = gas.xaxp, sub="First difference at lag k=12", xlab="Year", ylab="Y")
 abline(reg = lm(gas.2 ~ tail(gas.t, -12-1)), col = "red", lty = 1)
 abline(h=0, col = rgb(0, 0, 1, .7), lty = 2)
 legend("topright", legend = c("Linear trend", "Horizontal line"), col = c("red","blue"), cex = .8, lty = c(1,2))
@@ -168,13 +168,13 @@ legend("topright", legend = c("Linear trend", "Horizontal line"), col = c("red",
 
 ## ACF and PACF
 
-Now that our data is differenced and assumed to be stationary, we can examine the correlation structure and have an intuition of the values to feed into the model. We will use the auto-correlation and partial auto-correlation functions for this purpose. 
+Now that the data is differenced and assumed to be stationary, one can examine the correlation structure and have an intuition of the values to feed into the model. The auto-correlation and partial auto-correlation functions will serve this purpose. 
 
-To recall, the former describes how well the present value is correlated with its past values while the latter does the same but removing the linear dependence at intermediate lags. Both assume the data to be stationary and the lagged values to act like white noise. Thus, confidence intervals are constructed assuming a normal distribution, with $Z_\alpha$ the normal quantile at level $\alpha$ and $T$ the length of the data :
+To recall, the former describes how well the present value is correlated with its past values while the latter does the same but removing the linear dependence at intermediate lags. Both assume the data to be stationary and the lagged values to act like white noise. Thus, confidence intervals are constructed [assuming a normal distribution](#F4), with $Z_\alpha$ the normal quantile at level $\alpha$ and $T$ the length of the data :
 $$
 CI = \sbk{\frac{Z_{\alpha/2}}{\sqrt{T}}\ ;\ \frac{Z_{1-\alpha/2}}{\sqrt{T}}}
 $$
-In the figures below, we notice that both ACF and PACF tend towards zero. The values fall below the confidence interval after lag 1 for the ACF and lag 2 (or 1 according to the degree of tolerance) for the PACF. The simultaneous look on the ACF and PACF might suggest an ARMA(0,1) or ARMA(1,1) on a yearly basis.
+In the figures below, one notice that both ACF and PACF tend towards zero. The values fall below the confidence interval after lag 1 for the ACF and lag 2 (or 1 according to the degree of tolerance) for the PACF. The simultaneous look on the ACF and PACF might suggest an ARMA(0,1) or ARMA(1,1) on a yearly basis.
 \vspace{-.5em} <!-- Need space -->
 ```{r plot_acf_pacf_yearly, appendix=TRUE, fig.show="hold", out.width="49%", fig.width=5.5}
 # Plot the ACF and PACF, yearly basis
@@ -182,7 +182,7 @@ plot.acf.pacf(gas.2, lag.max = length(gas.2), simplify = F, linked_by_line = F, 
 
 ```
 \vspace{-1em} <!-- Need space -->
-Although kind of predictable, the presence of significant correlations at lag 1 is nevertheless intriguing. The transformations performed have only removed a deterministic element of seasonality and a stochastic component could indeed remain. Therefore, let analyze the ACF and PACF on a monthly basis, i.e. between lag [0 and 1[. Both show a significant value at first lag. Note that in the case of ACF, the value at time 0 is always 1. On a monthly basis, we might thus move with an ARMA(1,1).
+Although kind of predictable, the presence of significant correlations at lag 1 is nevertheless intriguing. The transformations performed have only removed a deterministic element of seasonality and a stochastic component could indeed remain. Analyzing the ACF and PACF on a monthly basis, i.e. between lag [0 and 1[ also reveal a significant value at first lag. Note that in the case of the ACF, the value at lag 0 is always 1. On a monthly basis, one might thus move with an ARMA(1,1).
 \vspace{-.5em} <!-- Need space -->
 ```{r plot_acf_pacf_monthly, appendix=TRUE, fig.show="hold", out.width="49%", fig.width=5.5}
 # Plot the ACF and PACF, monthly basis
@@ -193,9 +193,9 @@ plot.acf.pacf(gas.2, lag.max = gas.freq-1, simplify = F, linked_by_line = T, tit
 \pagebreak
 # Model selection
 
-In consideration of the aforementioned elements, we decided to proceed with an SARIMA model. Before continuing, we should yet provide a small definition. Basically, an SARIMA is an Autoregressive Integrated Moving Average that supports the direct modeling of a Seasonal component (S). Meaning we have 4 more elements ($P$, $D$, $Q$) and $s$, where $P$ is the seasonal AR order, $D$ the seasonal difference order, $Q$ the seasonal MA order and $s$ the seasonal period. 
+In consideration of the aforementioned elements, it was decided to proceed with an SARIMA model. Before continuing, one should yet provide a small definition. An SARIMA model is an Autoregressive Integrated Moving Average model that supports the direct modeling of a Seasonal component (S). Meaning we have 4 more elements ($P$, $D$, $Q$) and $s$, where $P$ is the seasonal AR order, $D$ the seasonal difference order, $Q$ the seasonal MA order and $s$ the seasonal period. 
 
-Putting them together, we obtain a model called SARIMA($p$, $d$, $q$)$\times$($P$, $D$, $Q$)$_s$ if the time series $X_t$ can be transformed into a stationary series without trend or seasonality. 
+Putting them together, one obtain a model called SARIMA($p$, $d$, $q$)$\times$($P$, $D$, $Q$)$_s$ if the time series $X_t$ can be transformed into a stationary series without trend or seasonality. 
 $$
 Y_t = \bigtriangledown^d \bigtriangledown^D_s X_t = (1-B)^d\ (1-B^s)^D\ X_t
 $$
@@ -207,11 +207,11 @@ where $B$ is the backshift operator, $\bigtriangledown$ the difference operator 
 
 ## Selection
 
-Now it's time to figure out which model would be the best fit to the data. To do this, we will iterate over all possible SARIMA models with parameters value up to 2. Nevertheless, following the visual analysis of the previous section, we expect to get models going only up to 1.
+Following the visual analysis of the previous section, it is expected to obtain SARIMA models of orders up to 1. However, to figure out which model would be the best one will iterate over all possible SARIMA models with parameters value up to 2.
 
-In order to compare the effectiveness of the different models, we will primarily use the Akaike information criterion (AIC). However, since the AIC tends to overestimate the number of parameters needed, we will also use the Bayesian information criterion (BIC), which penalizes a bit more the number of parameters, as a secondary information.
+To evaluate the effectiveness of the different models, the Akaike information criterion (AIC) will primarily be used. However, since the AIC tends to overestimate the number of parameters needed, the Bayesian information criterion (BIC), which penalizes a bit more the number of parameters, will provide a secondary information.
 
-The results below describe the top 3 models found, from best to worst. First, we notice via the AICR[^2] that we get models with very close results. The winning model has an AIC of 1229, a BIC of 1241 and is composed of 4 parameters. The second one has a higher AIC of only 0.064 and a lower BIC of 2.447 (relative to the first one) but has only 3 parameters. The last model is somewhat less interesting since the increase in AIC is more important and it has as much parameters as the best one.
+The results below describe the top 3 models found, from best to worst. First, one notice via the AICR[^2] that the models have very close results. The winning model has an AIC of 1229, a BIC of 1241 and is composed of 4 parameters. The second one has a higher AIC of only 0.064 and a lower BIC of 2.447 (relative to the first one) but has only 3 parameters. The last model is somewhat less interesting since the increase in AIC is more important and it has as much parameters as the best one.
 
 [^2]: Akaike information criterion relative to the best model. 
 
@@ -236,7 +236,7 @@ As an additional information, the log-likelihood ($\mathcal{L}$) of the models a
 
 # Models comparison and validation
 
-Now that we have a selection of models, we need to check if they are valid and correctly fitted. To do so, we will first perform an univariate and two-sided significance test (based on normal approximations) of the coefficients. Then, we will perform an evaluation of the predictive ability "on sample" and finally, after the choice of the final model, we will do an analysis of the residuals by a Portmanteau (Ljung-box) test. 
+Now that a selection of models is established, one need to check if they are valid and correctly fitted. To do so, one will first perform an univariate and two-sided significance test (based on normal approximations) of the coefficients. Then, evaluate the predictive ability "on sample" and finally, after the choice of the final model, do an analysis of the residuals by a Portmanteau (Ljung-box) test. 
 
 ## Coefficients
 
@@ -256,11 +256,11 @@ significance.test(model.3, T)
 \end{BVerbatim}
 \end{figure}
 
-Thanks to the indicators in parentheses, it is easy to see which coefficients are significant and to what degree. First, we notice that for the model with the lowest AIC (1), we cannot reject the hypothesis that the coefficient sar1 ($\Phi_1$) is statistically different from zero, even with an $\alpha = 0.10$. The same is observed for the third model with ar2 ($\phi_2$).
+Thanks to the indicators in parentheses, it is easy to see which coefficients are significant and to what degree. First, for the model with the lowest AIC (1) one cannot reject the hypothesis that the coefficient sar1 ($\Phi_1$) is statistically different from zero, even with an $\alpha = 0.10$. The same is observed for the third model with ar2 ($\phi_2$).
 
 ## Predictive power
 
-Let us now continue with a comparison of the predictive power of each model. To do this, we will build models based on the first 80% of data, predict a step ahead and repeat the operation by integrating an additional data into the model until we reach the end of the time series. We thus obtain predictions on the last 20% of data, which we can compare with the real data and also calculate the MSE of the models.
+Lets now continue with a comparison of the predictive power of each model. To this end, each model will be fed with $Y_{1:t}$ where $Y_{1:t}$ is the set of data up to $t$. At each step, one step ahead  will be predicted (ie. $\hat{Y}_{t+1}$) and the operation repeated with $t$ starting at 80% of the series and until the end is reached. In other terms, $t = 0.8T$ to $T-1$. Finally, one can calculate the MSE of each models by comparing with the last 20% observed data.
 
 ```{r on_sample_prediction, appendix=TRUE}
 #' MSE and predictions for the last 20% (see ts_on_sample_prediction.R) 
@@ -281,15 +281,15 @@ par(mar=c(4,4,2.2,4))
 # Plot the predictions
 plot(models.osp.ts(tail(gas, 24)), lwd=2, main="On sample predictions", ylab="MMcf", xlab="Year", 
      ylim=c(min(tail(gas, 24))-100, max(tail(gas, 24))+300))
-lines(models.osp.ts(model.1.osp$pred), col=rgb(1,0,0,.7), lwd=2)
-lines(models.osp.ts(model.2.osp$pred), col=rgb(0,1,0,.7), lwd=2)
-lines(models.osp.ts(model.3.osp$pred), col=rgb(0,0,1,.7), lwd=2)
-legend("topright", legend=c("Original data","(1,1,1)x(1,1,1)[12]", "(1,1,1)x(0,1,1)[12]", "(2,1,1)x(0,1,1)[12]"), col=1:4, lty=1, lwd=2, cex=.6)
+lines(models.osp.ts(model.1.osp$pred), col=rgb(1,0,0,.7))
+lines(models.osp.ts(model.2.osp$pred), col=rgb(0,1,0,.7))
+lines(models.osp.ts(model.3.osp$pred), col=rgb(0,0,1,.7))
+legend("topright", legend=c("Original data","(1,1,1)x(1,1,1)[12]", "(1,1,1)x(0,1,1)[12]", "(2,1,1)x(0,1,1)[12]"), col=1:4, lty=1, cex=.6)
 
 ```
 \pagebreak
 
-We observe that globally, although not perfect, the models manage to follow the trend, but that models 2 (green) and 3 (blue) seem to perform slightly better than the first one (red), and in fact, their MSE are lower with respectively 30142 and 29607, what corresponds to a decrease of more than 8% compared to 32830.
+Although not perfect, the models manage to follow the global trend pretty well but models 2 (green) and 3 (blue) seem to perform slightly better than the first one (red). In fact, their MSE are lower with respectively 30142 and 29607, what corresponds to a decrease of more than 8% compared to 32830.
 
 \begin{table}[h]
 \centering
@@ -300,7 +300,7 @@ We observe that globally, although not perfect, the models manage to follow the 
 \end{tabular}
 \end{table}
 
-Those results lead us to choose the second model. This one being the most parsimonious, it only loses 0.064 points of AIC, has only 1.8% more MSE than the third model and in view of the significance test seems to be the most relevant. The latter can mathematically be written as :
+Those results lead to choose the second model. This one being the most parsimonious, it only loses 0.064 points of AIC, has only 1.8% more MSE than the third model and in view of the significance test seems to be the most relevant. The latter can mathematically be written as :
 
 \begin{center}
 S-ARIMA(1,1,1)$\times$(0,1,1)$_{12}$\\
@@ -312,7 +312,7 @@ with coefficients, $\phi_1 = 0.453$, $\theta_1 = -0.832$, and $\Theta_1 = -1.000
 
 ## Ljung-Box
 
-As a last test, we will check the autocorrelation of the residuals of the model via a portmanteau test, more specifically Ljung-box. We test the null hypothesis that the residuals are not different from white noise, up to lag $K = \sqrt{T}$. 
+As a last test, one will check the autocorrelation of the residuals of the model via a portmanteau test, more specifically a Ljung-box test. One test the null hypothesis that the residuals are not different from white noise, up to lag $K = \sqrt{T}$. 
 $$H_0: \rho_{\epsilon}(1)=...= \rho_{\epsilon}(K) = 0$$
 $$H_1: \rho_{\epsilon}(1)=...= \rho_{\epsilon}(K) \ne 0$$
 ```{r plot_ljungbox, appendix=TRUE, fig.height=4.5}
@@ -321,20 +321,50 @@ plot.ljungbox(resid(model.2), floor(sqrt(length(gas))))
 
 ```
 \vspace{-1em}
-As the p-values are all well above the threshold, we cannot reject the null hypothesis. This is convenient for us because it means that there is no correlation in the residuals. We also tested the residuals squared and the [result](#F3) is similar. A more complete diagnostic which includes the ACF of the residuals is available in the [appendix](#F2).
+As the p-values are all well above the threshold, one cannot reject the null hypothesis. This is convenient because it means that there is no correlation in the residuals. The same test was performed for the residuals squared and the [result](#F3) is similar. Also, a more complete figure which includes the ACF of the residuals is available in the [appendix](#F2).
 
 # Predictions
 
+[TODO]
+
+Exponential smoothing methods produce forecasts where recent observations have a more exponentially greater weight than past ones. In other words, the more recent the observation, the higher the associated weight. Moreover, they can be used in a wide range of time series without any particular conditions. Therefore, it would be interesting to compare one of these methods before concluding with a SARIMA model. However, as the data contains both trend and seasonal components, the Holt (1957) and Winters (1960) method will be used. The component form, for an additive model is, with $p$ the seasonality:
+
+$$
+\widehat{Y}_{t+k} = a_t + kb_t + s_{[t-p+1+(k-1)\ \text{mod}\ p]}
+$$
+where $a_t$, $b_t$ and $s_t$ are given by:
+$$
+\begin{split}
+a_t & = \alpha(Y_t - s_{t-p}) + (1-\alpha) (a_{t-1} + b_{t-1}) \\
+b_t & = \beta(a_t - a_{t-1}) + (1-\beta)\ b_{t-1} \\
+s_t & = \gamma(Y_t - a_t) + (1-\gamma)\ s_{t-p}
+\end{split}
+$$
+and correspond to respectively the level, the trend and the seasonal component with their smoothing parameters $\alpha$, $\beta$ and $\gamma$. Those parameters are determined by minimizing the squared prediction error. The full output is available in [the appendix](#O1). With the gas deliveries time series, the latter are equal to:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}ccc@{}}
+\toprule
+\textbf{$\alpha$} & \textbf{$\beta$} & \textbf{$\gamma$} \\ \midrule
+0.5598            & 0.0153           & 0.5127            \\ \bottomrule
+\end{tabular}
+\end{table}
+
+[TODO]
+
 ```{r plot_predictions_side_by_side, appendix=TRUE, fig.show="hold", out.width="49%", fig.width=5.5}
 # Predictions with model 2 and Holt-winters, zoomed
-md = plot.n.ahead.predictions(gas, model.2, n=gas.freq+4, before=8)
-hw = plot.n.ahead.predictions(gas, model.2, n=gas.freq+4, before=8, holtwinters = T)
+md = plot.n.ahead.predictions(gas, model.2, n=gas.freq+4, before=8, xlab="Year", ylab="MMcf")
+hw = plot.n.ahead.predictions(gas, model.2, n=gas.freq+4, before=8, holtwinters = T, xlab="Year", ylab="MMcf")
 
 ```
 
+[TODO]
+
 ```{r plot_predictions_comparison, appendix=TRUE}
 (function(){
-plot(md$pred, lwd=2, ylim=c(min(md$pred-1000), max(md$pred+800)), main="Predictions comparison", col=1, ylab="MMcf")
+plot(md$pred, lwd=2, ylim=c(min(md$pred-1000), max(md$pred+800)), main="Predictions comparison\nSarima vs HoltWinters", col=1, xlab="Year", ylab="MMcf")
 lines(md$pred + 1.96*md$se, lty="dashed", col=1)
 lines(md$pred - 1.96*md$se, lty="dashed", col=1)
 lines(hw[,"fit"], col=4, lwd=2)
@@ -344,10 +374,9 @@ legend("topleft", legend=c("(1,1,1)x(0,1,1)[12]", "Holt-Winters"), col=c(1,4), l
 })()
 ```
 
-
-
-
 # Conclusion
+
+[TODO]
 
 <!------>
 
@@ -363,7 +392,7 @@ legend("topleft", legend=c("(1,1,1)x(0,1,1)[12]", "Holt-Winters"), col=c(1,4), l
 
 \bigskip
 \begin{mdframed}[style=thicc, frametitle=Note, frametitlebackgroundcolor=black!30]
-  For reproducibility purposes, the complete project containing the source code, the full sized figures and the results is available on \href{https://github.com/lamylio/LSTAT2170-Project}{github.com/lamylio}.
+  For reproducibility purposes, the complete project containing the source code, the full sized figures and the results is available on \href{https://github.com/lamylio/LSTAT2170-Project}{github.com/lamylio/LSTAT2170-Project}.
 \end{mdframed}
 
 ## Figures
@@ -387,12 +416,21 @@ tsdiag(model.2, gof.lag=floor(sqrt(length(gas))))
 
 ```{r, appendix=TRUE}
 # Ljung-Box test of the squared residuals
-plot.ljungbox(resid(model.2)**2, floor(sqrt(length(gas))), title="Ljung-Box of the squared residuals")
+plot.ljungbox(resid(model.2)**2, floor(sqrt(length(gas))), 
+              title="Ljung-Box of the squared residuals")
 
 ```
 
 
-### QQ-Plot of the residuals of model 2{#F4}
+### QQ-Plot of the differenciated time series{#F4}
+```{r, appendix=TRUE}
+# QQPlot of the residuals of model 2
+qqnorm(gas.2, sub="Detrended and deseasonalized")
+qqline(gas.2, col="red")
+
+```
+
+### QQ-Plot of the residuals of model 2{#F5}
 ```{r, appendix=TRUE}
 # QQPlot of the residuals of model 2
 qqnorm(resid(model.2), sub="Model (1,1,1)x(0,1,1)[12]")
@@ -402,17 +440,32 @@ qqline(resid(model.2), col="red")
 
 ### Predictions not zoomed
 
-```{r, appendix=TRUE, out.width="49%", fig.width=5.5}
+```{r, appendix=TRUE, out.width="49%", fig.width=5.5, fig.show="hold", results='hide'}
 # Predictions with model 2 and Holt-winters, zoomed
 plot.n.ahead.predictions(gas, model.2, n=gas.freq+4, before=length(gas))
 plot.n.ahead.predictions(gas, model.2, n=gas.freq+4, before=length(gas), holtwinters = T)
 
 ```
 
+## Output
+### Holt-Winters{#O1}
+
+\begin{figure}[h]
+\centering
+\hspace{-3em}
+\begin{BVerbatim}
+```{r, appendix=TRUE}
+# HoltWinters coefficients and parameters
+HoltWinters(gas)
+
+```
+\end{BVerbatim}
+\end{figure}
+
 \pagebreak
 
 ## Code
-The below section is automatically generated and tidied. 
+The below section is automatically generated and tidied. Visit the repository for more readability.
 
 ```{r appendix_pre}
 # remotes::install_github('yihui/formatR')
