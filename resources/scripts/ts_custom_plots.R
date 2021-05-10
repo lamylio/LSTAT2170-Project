@@ -102,7 +102,7 @@ plot.n.ahead.predictions <- function(time.serie, model, n = 10, before = 48, hol
   link = ts(c(tail(time.serie, 1), ifelse(isTRUE(holtwinters), fore[1,1], fore$pred[1])), start=end(time.serie), frequency=ts.freq)
   
   plot(original, type="l", main=paste0("Time serie and prediction (", n, "-ahead)", ifelse(holtwinters, "\nHolt-winter's method", "")), 
-       ylim=c(min(original)-0.1*min(original), max(original)+0.1*max(original)), 
+       ylim=c(min(original)-0.2*min(original), max(original)+0.2*max(original)), 
        xlim=c(start(original)[1], end(time.serie)[1]+(end(time.serie)[2]/ts.freq)+round(n/ts.freq)), ...)
   lines(link, col=2)
   

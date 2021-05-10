@@ -74,6 +74,6 @@ sarima.model.selection <- function(data, max.pq = c(1, 1), max.PQ = c(1, 1), d =
   # Return the best model, based on AIC
   if(return.best){
     best <- unlist(results[3, AIC.top[1]])
-    arima(data, order = c(best[1], d, best[2]), seasonal = list(order = c(best[3], D, best[4]), period = season))
+    return(arima(data, order = c(best[1], d, best[2]), seasonal = list(order = c(best[3], D, best[4]), period = season)))
   }
 }
