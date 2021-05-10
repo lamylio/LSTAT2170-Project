@@ -424,7 +424,7 @@ As a final word, this work demonstrates that although we have tools that automat
 ## Figures
 
 ### Plot of the data{#F1}
-```{r, appendix=TRUE}
+```{r appendix_1_plot, appendix=TRUE}
 # Plot the complete dataset non decomposed
 plot(gas, main = "Gas deliveries in Florida", xaxp = gas.xaxp, ylab="MMcf")
 
@@ -432,7 +432,7 @@ plot(gas, main = "Gas deliveries in Florida", xaxp = gas.xaxp, ylab="MMcf")
 
 ### TSDiag (Portemanteau test){#F2}
 
-```{r, appendix=TRUE, fig.height=5.5}
+```{r appendix_2_tsdiag, appendix=TRUE, fig.height=5.5}
 # TSDiag : Ljung-Box test with ACF
 tsdiag(model.2, gof.lag=floor(sqrt(length(gas))))
 
@@ -440,7 +440,7 @@ tsdiag(model.2, gof.lag=floor(sqrt(length(gas))))
 
 ### Ljung-Box test of the squared residuals{#F3}
 
-```{r, appendix=TRUE}
+```{r appendix_3_ljung, appendix=TRUE}
 # Ljung-Box test of the squared residuals
 plot.ljungbox(resid(model.2)**2, floor(sqrt(length(gas))), 
               title="Ljung-Box of the squared residuals")
@@ -449,7 +449,7 @@ plot.ljungbox(resid(model.2)**2, floor(sqrt(length(gas))),
 
 
 ### QQ-Plot of the differenciated time series{#F4}
-```{r, appendix=TRUE}
+```{r appendix_4_qq_diff, appendix=TRUE}
 # QQPlot of the residuals of model 2
 qqnorm(gas.2, sub="Detrended and deseasonalized")
 qqline(gas.2, col="red")
@@ -457,7 +457,7 @@ qqline(gas.2, col="red")
 ```
 
 ### QQ-Plot of the residuals of model 2{#F5}
-```{r, appendix=TRUE}
+```{r appendix_5_qq_res, appendix=TRUE}
 # QQPlot of the residuals of model 2
 qqnorm(resid(model.2), sub="Model (1,1,1)x(0,1,1)[12]")
 qqline(resid(model.2), col="red")
@@ -466,7 +466,7 @@ qqline(resid(model.2), col="red")
 
 ### Predictions not zoomed{#F6}
 
-```{r, appendix=TRUE, out.width="49%", fig.width=5.5, fig.show="hold", results='hide'}
+```{r appendix_6_ahead, appendix=TRUE, out.width="49%", fig.width=5.5, fig.show="hold", results='hide'}
 # Predictions with model 2 and Holt-winters, zoomed
 plot.n.ahead.predictions(gas, model.2, n=gas.freq+4, before=length(gas))
 plot.n.ahead.predictions(gas, model.2, n=gas.freq+4, before=length(gas), holtwinters = T)
@@ -475,7 +475,7 @@ plot.n.ahead.predictions(gas, model.2, n=gas.freq+4, before=length(gas), holtwin
 
 ### Holt-Winters on sample predictions{#F7}
 
-```{r, appendix=TRUE}
+```{r appendix_7_holt, appendix=TRUE}
 # Plot the filtering of HW model
 plot(HoltWinters(gas), ylab="MMcf", xlab="Year")
 legend("topright", legend = c("Observed", "Holt-Winters"), lty=1, col=c(1,2), cex=.7)
@@ -490,7 +490,7 @@ legend("topright", legend = c("Observed", "Holt-Winters"), lty=1, col=c(1,2), ce
 \begin{figure}[H]
 \centering
 \begin{BVerbatim}
-```{r, appendix=TRUE}
+```{r appendix_out_1, appendix=TRUE}
 # library(forecast)
 round(forecast::accuracy(model.1), 3)
 round(forecast::accuracy(model.2), 3)
@@ -505,7 +505,7 @@ round(forecast::accuracy(model.3), 3)
 \centering
 \hspace{-3em}
 \begin{BVerbatim}
-```{r, appendix=TRUE}
+```{r appendix_out_2, appendix=TRUE}
 # HoltWinters coefficients and parameters
 HoltWinters(gas)
 
